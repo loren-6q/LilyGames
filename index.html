@@ -4,342 +4,411 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lily's Learning Adventure</title>
-    <!-- React and Babel for browser-side JSX transformation -->
+    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
-        body { font-family: 'Nunito', sans-serif; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Nunito', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .animate-bounce-slow { animation: bounce 3s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(-10%); } 50% { transform: translateY(0); } }
+        
+        /* Rain Animation */
+        .rain-drop {
+            position: absolute;
+            background-color: #60a5fa;
+            width: 2px;
+            height: 10px;
+            top: -20px;
+            animation: fall 0.5s linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(300px); opacity: 0; }
+        }
+
+        /* Weather Overlays */
+        .weather-overlay {
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* Flash card flip effect */
+        .perspective-1000 { perspective: 1000px; }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card-flipped { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .flip-card-back { transform: rotateY(180deg); }
+
+        /* Scoring Animations */
+        @keyframes scorePop {
+            0% { transform: scale(1); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; transform: translateY(-50px); }
+        }
+        .score-pop {
+            animation: scorePop 0.8s ease-out forwards;
+        }
     </style>
 </head>
-<body class="bg-slate-100">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- Assets & Data ---
-        const generateWordList = () => {
-            const words = ['CAT', 'DOG', 'SUN', 'BOX', 'RED', 'TEN', 'PIG', 'HAT', 'FLY', 'JAM', 'FISH', 'BIRD', 'MOON', 'TREE', 'FROG', 'CAKE', 'DUCK', 'BALL', 'BOAT', 'BEAR', 'ROSE', 'STAR', 'APPLE', 'SMILE', 'GRASS', 'MUSIC', 'HEART', 'LIGHT', 'OCEAN', 'QUEEN', 'TIGER', 'WATER', 'HOUSE', 'CHAIR', 'FRUIT', 'CANDY', 'PLANT', 'TRUCK', 'BEACH', 'SWEET', 'EARTH', 'SPACE', 'CLOUD', 'RAINBOW', 'BUTTERFLY'];
-            return words.sort(() => Math.random() - 0.5);
-        };
+        const SPELLING_WORDS = [
+            { word: 'APPLE', image: '🍎' }, { word: 'CAT', image: '🐱' }, { word: 'DOG', image: '🐶' },
+            { word: 'SUN', image: '☀️' }, { word: 'MOON', image: '🌙' }, { word: 'TREE', image: '🌳' },
+            { word: 'FISH', image: '🐟' }, { word: 'BALL', image: '⚽' }, { word: 'BOAT', image: '⛵' },
+            { word: 'BIRD', image: '🐦' }, { word: 'FROG', image: '🐸' }, { word: 'CAKE', image: '🍰' },
+            { word: 'DUCK', image: '🦆' }, { word: 'BOOK', image: '📖' }, { word: 'STAR', image: '⭐' }
+        ];
 
-        const COLORS = ['#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#475569', '#ffffff', '#000000'];
+        const GARDEN_OBJECTS = ['🌸', '🌻', '🌷', '🌿', '🍄', '🌼', '🌹', '🍀', '🦋', '🐞'];
 
         const ASSETS = {
-            hair: {
-                bob: { label: 'Bob', p: 'M 32 40 Q 32 15 50 15 Q 68 15 68 40 L 75 65 L 25 65 Z' },
-                pony: { label: 'Pony', p: 'M 32 40 Q 50 18 68 40 M 68 35 Q 85 30 85 60 L 68 55' },
-                braids: { label: 'Braids', p: 'M 32 40 Q 50 20 68 40 M 35 60 L 30 85 M 65 60 L 70 85' },
-                long: { label: 'Long', p: 'M 30 40 Q 50 10 70 40 L 75 90 L 25 90 Z' },
-                curly: { label: 'Curly', p: 'M 30 40 Q 30 10 50 10 Q 70 10 70 40 Q 80 50 70 60 Q 80 70 70 80 L 30 80 Q 20 70 30 60 Q 20 50 30 40' }
-            },
-            shirt: {
-                tee: { label: 'T-Shirt', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 25 75 L 32 85 Z M 65 65 L 75 75 L 68 85 Z' },
-                tank: { label: 'Tank', p: 'M 40 65 L 60 65 L 62 95 L 38 95 Z' },
-                hoodie: { label: 'Hoodie', p: 'M 35 65 L 65 65 L 65 98 L 35 98 Z M 40 50 Q 50 35 60 50 L 60 65 L 40 65 Z' },
-                dress: { label: 'Dress', p: 'M 40 65 L 60 65 L 75 115 L 25 115 Z' },
-                sweater: { label: 'Sweater', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 20 85 L 28 95 Z M 65 65 L 80 85 L 72 95 Z' }
-            },
-            pants: {
-                jeans: { label: 'Jeans', p: 'M 37 92 L 63 92 L 63 125 L 52 125 L 52 108 L 48 108 L 48 125 L 37 125 Z' },
-                skirt: { label: 'Skirt', p: 'M 35 92 L 65 92 L 75 120 L 25 120 Z' },
-                shorts: { label: 'Shorts', p: 'M 37 92 L 63 92 L 63 105 L 52 105 L 52 100 L 48 100 L 48 105 L 37 105 Z' },
-                leggings: { label: 'Leggings', p: 'M 38 92 L 62 92 L 62 128 L 51 128 L 51 105 L 49 105 L 49 128 L 38 128 Z' },
-                tutu: { label: 'Tutu', p: 'M 35 92 L 65 92 Q 85 110 65 115 L 35 115 Q 15 110 35 92' }
-            },
-            shoes: {
-                snkr: { label: 'Sneaks', p: 'M 35 130 L 48 130 L 49 142 L 33 142 Z M 52 130 L 65 130 L 67 142 L 51 142 Z' },
-                boot: { label: 'Boots', p: 'M 35 122 L 48 122 L 48 142 L 33 142 Z M 52 122 L 65 122 L 65 142 L 50 142 Z' },
-                flats: { label: 'Flats', p: 'M 37 135 L 48 135 L 48 142 L 35 142 Z M 52 135 L 63 135 L 63 142 L 50 142 Z' },
-                heels: { label: 'Heels', p: 'M 37 130 L 48 130 L 48 142 L 45 142 L 45 135 L 37 135 Z M 52 130 L 63 130 L 63 142 L 60 142 L 60 135 L 52 135 Z' },
-                sandals: { label: 'Sandals', p: 'M 35 138 L 65 138 L 65 142 L 35 142 Z' }
-            },
-            acc: {
-                cat: '🐱', wand: '🪄', glasses: '👓', flower: '🌸', phone: '📱', 
-                puppy: '🐶', treat: '🍦', book: '📖', guitar: '🎸', star: '⭐', 
-                butterfly: '🦋', bag: '👜', camera: '📷', pizza: '🍕', balloon: '🎈'
-            }
+            hair: { bob: { p: 'M 32 40 Q 32 15 50 15 Q 68 15 68 40 L 75 65 L 25 65 Z' }, pony: { p: 'M 32 40 Q 50 18 68 40 M 68 35 Q 85 30 85 60 L 68 55' } },
+            shirt: { tee: { p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 25 75 L 32 85 Z M 65 65 L 75 75 L 68 85 Z' } },
+            pants: { jeans: { p: 'M 37 92 L 63 92 L 63 125 L 52 125 L 52 108 L 48 108 L 48 125 L 37 125 Z' } },
+            shoes: { snkr: { p: 'M 35 130 L 48 130 L 49 142 L 33 142 Z M 52 130 L 65 130 L 67 142 L 51 142 Z' } }
         };
 
-        function Doll({ outfit }) {
-            const skin = "#ffdbac";
-            return (
-                <svg viewBox="0 0 100 150" className="w-full h-full drop-shadow-xl overflow-visible">
-                    <rect x="42" y="115" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" />
-                    <rect x="52" y="115" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" />
-                    <rect x="32" y="70" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" transform="rotate(10 32 70)" />
-                    <rect x="62" y="70" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" transform="rotate(-10 68 70)" />
-                    <rect x="38" y="65" width="24" height="55" rx="10" fill={skin} stroke="#333" strokeWidth="1.5" />
-                    <circle cx="50" cy="48" r="18" fill={skin} stroke="#333" strokeWidth="1.5" />
-                    <circle cx="44" cy="46" r="2" fill="#000" />
-                    <circle cx="56" cy="46" r="2" fill="#000" />
-                    <path d="M 46 54 Q 50 58 54 54" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" />
-                    {outfit.shoes && <path d={ASSETS.shoes[outfit.shoes.s].p} fill={outfit.shoes.c} stroke="#333" strokeWidth="1.5" />}
-                    {outfit.pants && <path d={ASSETS.pants[outfit.pants.s].p} fill={outfit.pants.c} stroke="#333" strokeWidth="1.5" />}
-                    {outfit.shirt && <path d={ASSETS.shirt[outfit.shirt.s].p} fill={outfit.shirt.c} stroke="#333" strokeWidth="1.5" />}
-                    {outfit.hair && <path d={ASSETS.hair[outfit.hair.s].p} fill={outfit.hair.c} stroke="#333" strokeWidth="1.5" />}
-                    {outfit.acc && <g transform="translate(50, 95)"><text fontSize="30" textAnchor="middle" alignmentBaseline="middle">{ASSETS.acc[outfit.acc.s]}</text></g>}
-                </svg>
-            );
-        }
-
-        function App() {
+        const App = () => {
             const [view, setView] = useState('menu');
             const [lvl, setLvl] = useState(1);
             const [xp, setXp] = useState(0);
-            const [spellingWords] = useState(generateWordList());
-            const [bank, setBank] = useState(new Set(['hair_bob_#4b2c20', 'shirt_tee_#ec4899', 'pants_jeans_#3b82f6', 'shoes_snkr_#475569']));
-            const [currentOutfit, setCurrentOutfit] = useState({
-                hair: { s: 'bob', c: '#4b2c20' }, shirt: { s: 'tee', c: '#ec4899' },
-                pants: { s: 'jeans', c: '#3b82f6' }, shoes: { s: 'snkr', c: '#475569' }, acc: null
-            });
-            const [pendingUnlock, setPendingUnlock] = useState(null);
-            const [selectedGardenNum, setSelectedGardenNum] = useState(null);
+            const [focusNum, setFocusNum] = useState(1);
+            const [bank, setBank] = useState(new Set(['hair_bob_#4b2c20', 'shirt_tee_#ec4899', 'pants_jeans_#3b82f6', 'shoes_snkr_#ffffff']));
+            const [outfit, setOutfit] = useState({ hair: { s: 'bob', c: '#4b2c20' }, shirt: { s: 'tee', c: '#ec4899' }, pants: { s: 'jeans', c: '#3b82f6' }, shoes: { s: 'snkr', c: '#ffffff' } });
 
             const addXp = (amt) => {
-                let nextXp = xp + amt;
-                if (nextXp >= 100) {
-                    setLvl(l => l + 1);
-                    setXp(nextXp - 100);
-                } else setXp(nextXp);
+                setXp(v => {
+                    const next = v + amt;
+                    if (next >= 100) { setLvl(l => l + 1); return next - 100; }
+                    return next;
+                });
             };
 
             return (
-                <div className="fixed inset-0 bg-slate-100 flex items-center justify-center p-0 select-none">
-                    <div className="w-full h-full max-w-md bg-white shadow-2xl relative overflow-hidden flex flex-col">
-                        <div className="flex justify-between items-center px-4 py-3 bg-white border-b border-slate-100 z-50">
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="w-full max-w-md h-screen md:h-[90vh] bg-white md:rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col border-[12px] border-slate-900">
+                        
+                        <div className="flex justify-between items-center p-4 z-50">
                             {view !== 'menu' && (
-                                <button onClick={() => setView('menu')} className="text-slate-400 font-black flex items-center text-[10px] uppercase">
-                                    <i data-lucide="chevron-left" class="w-4 h-4"></i> Back
+                                <button onClick={() => setView('menu')} className="text-slate-400 font-black flex items-center gap-1 uppercase text-[10px] tracking-widest">
+                                    ← Back
                                 </button>
                             )}
-                            <div className="bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 ml-auto font-black text-indigo-600 text-[10px] uppercase">
-                                Level {lvl}
-                            </div>
+                            <div className="bg-indigo-50 px-4 py-1 rounded-full border border-indigo-100 ml-auto font-black text-indigo-600 text-xs">LVL {lvl}</div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
-                            {view === 'menu' && <MainMenu setView={setView} />}
-                            {view === 'garden_select' && <GardenPicker onSelect={(n) => { setSelectedGardenNum(n); setView('garden'); }} />}
-                            {view === 'garden' && <MathGarden addXp={addXp} focusNum={selectedGardenNum} />}
-                            {view === 'spelling' && <SpellingBee addXp={addXp} words={spellingWords} />}
-                            {view === 'facts' && <MathFacts addXp={addXp} onComplete={() => setView('menu')} />}
-                            {view === 'mirror' && <MirrorRoom outfit={currentOutfit} setOutfit={setCurrentOutfit} bank={bank} setView={setView} />}
-                            {view === 'stylist' && <StylistSelection setView={setView} bank={bank} setPendingUnlock={setPendingUnlock} />}
-                            {view === 'unlock' && <FamilyChallenge onComplete={() => {
-                                setBank(prev => new Set([...prev, pendingUnlock]));
-                                const [cat, s, c] = pendingUnlock.split('_');
-                                setCurrentOutfit(prev => ({ ...prev, [cat]: { s, c } }));
-                                setView('mirror');
-                            }} />}
+                        <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+                            {view === 'menu' && (
+                                <div className="space-y-4 pt-4">
+                                    <h1 className="text-4xl font-black text-center mb-8 text-slate-800">Lily's Games</h1>
+                                    <MenuBtn color="bg-emerald-500" icon="🌸" title="Math Garden" onClick={() => setView('garden_select')} />
+                                    <MenuBtn color="bg-orange-400" icon="🧠" title="Math Facts" onClick={() => setView('facts_select')} />
+                                    <MenuBtn color="bg-pink-500" icon="⌨️" title="Spelling Bee" onClick={() => setView('spelling')} />
+                                    <MenuBtn color="bg-rose-400" icon="👗" title="Style Mirror" onClick={() => setView('mirror')} />
+                                </div>
+                            )}
+
+                            {(view === 'garden_select' || view === 'facts_select') && (
+                                <div className="grid grid-cols-4 gap-2 pt-8">
+                                    {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                                        <button key={n} onClick={() => { setFocusNum(n); setView(view === 'garden_select' ? 'garden' : 'facts'); }} className="aspect-square bg-slate-100 rounded-2xl text-2xl font-black text-slate-700 hover:bg-indigo-500 hover:text-white transition-all">{n}</button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {view === 'garden' && <GardenGame focusNum={focusNum} addXp={addXp} />}
+                            {view === 'facts' && <FactsGame focusNum={focusNum} addXp={addXp} />}
+                            {view === 'spelling' && <SpellingBee addXp={addXp} />}
+                            {view === 'mirror' && <MirrorView outfit={outfit} bank={bank} setOutfit={setOutfit} setView={setView} />}
                         </div>
 
-                        <div className="h-2 w-full bg-slate-100">
-                            <div className="h-full bg-pink-500 transition-all duration-500" style={{ width: `${xp}%` }} />
-                        </div>
+                        <div className="h-3 w-full bg-slate-100"><div className="h-full bg-pink-500 transition-all duration-700" style={{ width: `${xp}%` }} /></div>
                     </div>
                 </div>
             );
-        }
+        };
 
-        function MainMenu({ setView }) {
-            return (
-                <div className="space-y-4 p-4">
-                    <h1 className="text-4xl font-black text-slate-800 text-center mb-10">Hi Lily!</h1>
-                    <button onClick={() => setView('garden_select')} className="bg-indigo-500 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🌻</span> <span className="font-black text-xl">Math Garden</span></button>
-                    <button onClick={() => setView('spelling')} className="bg-pink-500 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🐝</span> <span className="font-black text-xl">Spelling Bee</span></button>
-                    <button onClick={() => setView('facts')} className="bg-orange-400 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🔢</span> <span className="font-black text-xl">Math Facts</span></button>
-                    <button onClick={() => setView('mirror')} className="bg-rose-400 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">👗</span> <span className="font-black text-xl">Mirror</span></button>
-                </div>
-            );
-        }
-
-        function GardenPicker({ onSelect }) {
-            return (
-                <div className="text-center pt-4">
-                    <h2 className="text-2xl font-black text-indigo-600 mb-6 uppercase">Choose a Number!</h2>
-                    <div className="grid grid-cols-5 gap-2 px-2">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                            <button key={n} onClick={() => onSelect(n)} className="h-16 bg-white border-2 border-indigo-100 rounded-2xl flex items-center justify-center text-2xl font-black text-indigo-500 shadow-sm active:scale-90">{n}</button>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
-
-        function MathGarden({ addXp, focusNum }) {
-            const [p, setP] = useState({ a: focusNum, b: 1, op: '+', ans: focusNum + 1 });
+        const GardenGame = ({ focusNum, addXp }) => {
+            const [q, setQ] = useState({ a: 0, b: 0, op: '+', ans: 0 });
+            const [stats, setStats] = useState({ right: 0, wrong: 0 });
             const [garden, setGarden] = useState([]);
-            const next = () => {
+            const [input, setInput] = useState('');
+            const [weather, setWeather] = useState(null); 
+
+            const generate = () => {
                 const op = Math.random() > 0.5 ? '+' : '-';
-                let b = op === '+' ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * focusNum) + 1;
-                setP({ a: focusNum, b, op, ans: op === '+' ? focusNum + b : focusNum - b });
+                const other = Math.floor(Math.random() * 11);
+                let a, b, ans;
+
+                if (op === '+') {
+                    a = focusNum; b = other; ans = a + b;
+                } else {
+                    a = Math.max(focusNum, other);
+                    b = (a === focusNum) ? other : a - focusNum;
+                    ans = a - b;
+                }
+                setQ({ a, b, op, ans });
+                setInput('');
             };
-            return (
-                <div className="h-full flex flex-col p-2">
-                    <div className="flex-1 bg-sky-50 rounded-[2.5rem] relative overflow-hidden mb-4 shadow-inner border border-slate-100">
-                        {garden.map((f, i) => <div key={i} className="absolute text-4xl animate-bounce" style={{ left: `${f.x}%`, top: `${f.y}%` }}>{f.type}</div>)}
-                    </div>
-                    <div className="text-center p-6 bg-white rounded-3xl shadow-xl border border-slate-50">
-                        <div className="text-5xl font-black mb-6 text-indigo-600">{p.a} {p.op} {p.b} = ?</div>
-                        <input type="number" autoFocus className="w-full text-center text-4xl p-4 bg-slate-50 rounded-2xl outline-none border-2 border-indigo-100" 
-                            onChange={(e) => {
-                                if (parseInt(e.target.value) === p.ans) {
-                                    setGarden([...garden, { x: Math.random()*80+10, y: Math.random()*25+60, type: ['🌻', '🌷', '🌸', '🌼', '🐝'][Math.floor(Math.random()*5)] }]);
-                                    addXp(10); e.target.value = ''; next();
-                                }
-                            }} />
-                    </div>
-                </div>
-            );
-        }
 
-        function SpellingBee({ addXp, words }) {
-            const [idx, setIdx] = useState(0);
-            const [input, setInput] = useState([]);
-            const [scramble, setScramble] = useState([]);
-            const word = words[idx];
+            useEffect(() => generate(), [focusNum]);
 
-            useEffect(() => {
-                const s = word.split('').map((c, i) => ({ c, i })).sort(() => Math.random() - 0.5);
-                setScramble(s); setInput([]);
-            }, [idx]);
-
-            const handle = (obj, i) => {
-                if (obj.c === word[input.length]) {
-                    const next = [...input, obj.c];
-                    setInput(next);
-                    const nextS = [...scramble]; nextS.splice(i, 1); setScramble(nextS);
-                    if (next.join('') === word) { addXp(20); setTimeout(() => setIdx(v => (v + 1) % words.length), 600); }
+            const check = (val) => {
+                setInput(val);
+                if (parseInt(val) === q.ans) {
+                    setStats(s => ({ ...s, right: s.right + 1 }));
+                    setWeather('rain');
+                    addXp(10);
+                    setTimeout(() => {
+                        const randomObj = GARDEN_OBJECTS[Math.floor(Math.random() * GARDEN_OBJECTS.length)];
+                        setGarden(g => [...g, { x: Math.random() * 80 + 10, y: Math.random() * 50 + 30, icon: randomObj }]);
+                        setWeather(null);
+                        generate();
+                    }, 1500);
+                } else if (val.length >= q.ans.toString().length) {
+                    setStats(s => ({ ...s, wrong: s.wrong + 1 }));
+                    setWeather('sun');
+                    setTimeout(() => {
+                        setWeather(null);
+                        setInput('');
+                    }, 1000);
                 }
             };
 
             return (
-                <div className="text-center pt-8">
-                    <div className="text-xl font-black text-pink-500 mb-8 uppercase tracking-widest">Spell It!</div>
-                    <div className="flex flex-wrap justify-center gap-2 mb-12 min-h-[64px]">
-                        {word.split('').map((_, i) => <div key={i} className={`w-10 h-14 border-b-4 flex items-center justify-center text-4xl font-black ${input[i] ? 'border-pink-500 text-slate-800' : 'border-slate-100'}`}>{input[i] || ''}</div>)}
+                <div className="h-full flex flex-col">
+                    <div className="flex justify-between px-4 mb-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                        <span>Right: {stats.right}</span>
+                        <span>Wrong: {stats.wrong}</span>
                     </div>
-                    <div className="flex flex-wrap justify-center gap-2 max-w-xs mx-auto">
-                        {scramble.map((o, i) => <button key={`${idx}-${o.i}`} onClick={() => handle(o, i)} className="w-14 h-14 bg-white border-2 border-pink-100 rounded-2xl text-2xl font-black text-pink-500 shadow-md">{o.c}</button>)}
-                    </div>
-                </div>
-            );
-        }
-
-        function MathFacts({ addXp, onComplete }) {
-            const [q, setQ] = useState({ q: '', a: 0 });
-            const [count, setCount] = useState(0);
-            const next = () => {
-                const a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1;
-                setQ({ q: `${a} + ${b}`, a: a+b });
-            };
-            useEffect(() => next(), [count]);
-            return (
-                <div className="text-center py-12">
-                    <div className="bg-white p-12 rounded-[3.5rem] shadow-xl border border-slate-50">
-                        <div className="text-6xl font-black text-slate-700 mb-8">{q.q} = ?</div>
-                        <input type="number" autoFocus className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-2 border-orange-100" 
-                            onChange={(e) => { if(parseInt(e.target.value) === q.a) { if(count < 9) {setCount(v=>v+1); e.target.value='';} else {addXp(100); onComplete();} } }} />
-                    </div>
-                </div>
-            );
-        }
-
-        function MirrorRoom({ outfit, setOutfit, bank, setView }) {
-            const [tab, setTab] = useState('shirt');
-            const items = Array.from(bank).filter(id => id.startsWith(tab));
-            return (
-                <div className="h-full flex flex-col gap-2">
-                    <div className="flex justify-between items-center px-2">
-                        <h2 className="text-xl font-black text-indigo-600 uppercase">Mirror</h2>
-                        <button onClick={() => setView('stylist')} className="bg-rose-400 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1">Boutique</button>
-                    </div>
-                    <div className="bg-sky-50 rounded-3xl py-4 flex justify-center shrink-0 border border-white shadow-inner">
-                        <div className="h-52 w-52"><Doll outfit={outfit} /></div>
-                    </div>
-                    <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide shrink-0 px-1">
-                        {Object.keys(ASSETS).map(t => (
-                            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase shrink-0 transition-all ${tab === t ? 'bg-indigo-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>{t}</button>
+                    <div className="flex-1 bg-sky-100 rounded-[2.5rem] relative overflow-hidden border-4 border-white shadow-inner mb-4">
+                        <div className={`absolute inset-0 bg-orange-400/20 weather-overlay flex items-center justify-center ${weather === 'sun' ? 'opacity-100' : 'opacity-0'}`}>
+                             <div className="text-8xl animate-pulse">☀️</div>
+                        </div>
+                        {weather === 'rain' && Array.from({ length: 40 }).map((_, i) => (
+                            <div key={i} className="rain-drop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 0.5}s` }} />
+                        ))}
+                        {garden.map((f, i) => (
+                            <div key={i} className="absolute text-4xl animate-bounce-slow" style={{ left: `${f.x}%`, top: `${f.y}%`, animationDelay: `${i * 0.1}s` }}>
+                                {f.icon}
+                            </div>
                         ))}
                     </div>
-                    <div className="flex-1 bg-white rounded-3xl p-1 border border-slate-50 overflow-y-auto scrollbar-hide">
-                        <div className="grid grid-cols-2 gap-1 content-start">
-                            {items.map(id => {
-                                const [cat, s, clr] = id.split('_');
-                                const sel = outfit[cat]?.s === s && outfit[cat]?.c === clr;
-                                return (
-                                    <button key={id} onClick={() => setOutfit({...outfit, [cat]: {s, c: clr}})} className={`bg-slate-50 rounded-2xl border-4 transition-all min-h-[160px] flex items-center justify-center p-2 ${sel ? 'border-indigo-400' : 'border-transparent'}`}>
-                                        {cat === 'acc' ? <div className="text-6xl">{ASSETS.acc[s]}</div> : <svg viewBox="0 0 100 150" className="w-full h-full"><path d={ASSETS[cat][s].p} fill={clr} stroke="#333" strokeWidth="3" /></svg>}
-                                    </button>
-                                );
-                            })}
+                    <div className="p-6 bg-white rounded-3xl shadow-xl text-center border-4 border-emerald-50">
+                        <div className="text-5xl font-black mb-4 text-slate-700">{q.a} {q.op} {q.b} = ?</div>
+                        <input type="number" value={input} onChange={e => check(e.target.value)} className="w-full text-center text-4xl p-3 bg-slate-50 rounded-2xl outline-none border-4 border-transparent focus:border-emerald-300" autoFocus />
+                    </div>
+                </div>
+            );
+        };
+
+        /**
+         * MATH FACTS - Memorization Engine v2
+         * Incentive: Speed Bonuses + Win Streaks + Boss Flash
+         */
+        const FactsGame = ({ focusNum, addXp }) => {
+            const [q, setQ] = useState({ a: 0, b: 0, ans: 0 });
+            const [mode, setMode] = useState('look'); 
+            const [input, setInput] = useState('');
+            const [streak, setStreak] = useState(0);
+            const [highStreak, setHighStreak] = useState(0);
+            const [showBonus, setShowBonus] = useState(null);
+            const startTime = useRef(Date.now());
+
+            const generate = () => {
+                const b = Math.floor(Math.random() * 11);
+                setQ({ a: focusNum, b, ans: focusNum + b });
+                setInput('');
+                setMode('look');
+                // The delay decreases as streak increases to force faster memory retrieval
+                const lookTime = Math.max(400, 1200 - (streak * 100));
+                setTimeout(() => {
+                    setMode('recall');
+                    startTime.current = Date.now();
+                }, lookTime);
+            };
+
+            useEffect(() => generate(), [focusNum]);
+
+            const handleInput = (e) => {
+                const val = e.target.value;
+                setInput(val);
+                if (parseInt(val) === q.ans) {
+                    const elapsed = Date.now() - startTime.current;
+                    const isFast = elapsed < 1500;
+                    
+                    let points = 10;
+                    if (mode === 'recall') points += 10;
+                    if (isFast) points += 10;
+                    
+                    setStreak(s => {
+                        const next = s + 1;
+                        if (next > highStreak) setHighStreak(next);
+                        return next;
+                    });
+
+                    setShowBonus(isFast ? "⚡ SPEED BONUS!" : "✨ RECALLED!");
+                    addXp(points);
+                    
+                    setTimeout(() => {
+                        setShowBonus(null);
+                        generate();
+                    }, 600);
+                } else if (val.length >= q.ans.toString().length) {
+                    setStreak(0);
+                    setInput('');
+                }
+            };
+
+            return (
+                <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                    <div className="absolute top-16 right-8 text-orange-400 font-black">
+                        BEST: {highStreak}
+                    </div>
+
+                    <div className="mb-6 w-full flex flex-col items-center gap-2">
+                        <div className="flex gap-1">
+                            {Array.from({length: 5}).map((_, i) => (
+                                <div key={i} className={`w-6 h-2 rounded-full transition-all duration-300 ${streak % 5 > i || (streak > 0 && nextStreakBatch(streak, i)) ? 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)]' : 'bg-slate-200'}`} />
+                            ))}
+                        </div>
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            STREAK: {streak}
+                        </span>
+                    </div>
+
+                    <div className="relative w-full max-w-sm h-64 perspective-1000 mb-8">
+                        {showBonus && (
+                            <div className="absolute -top-12 left-0 right-0 z-50 score-pop text-2xl font-black text-orange-500 italic">
+                                {showBonus}
+                            </div>
+                        )}
+                        
+                        <div className={`flip-card-inner w-full h-full relative ${mode === 'recall' ? 'flip-card-flipped' : ''}`}>
+                            <div className="flip-card-front bg-white border-8 border-orange-100 rounded-[3rem] shadow-xl flex flex-col items-center justify-center p-8">
+                                <span className="text-xs font-black text-orange-400 uppercase mb-2 animate-pulse">Snapshot!</span>
+                                <div className="text-6xl font-black text-slate-800">{q.a} + {q.b} = {q.ans}</div>
+                            </div>
+                            
+                            <div className="flip-card-back bg-white border-8 border-indigo-100 rounded-[3rem] shadow-xl flex flex-col items-center justify-center p-8">
+                                <span className="text-xs font-black text-indigo-400 uppercase mb-2">Recall It!</span>
+                                <div className="text-6xl font-black text-slate-800">{q.a} + {q.b} = ?</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            );
-        }
 
-        function StylistSelection({ setView, bank, setPendingUnlock }) {
-            const [cat, setCat] = useState('shirt');
-            const [style, setStyle] = useState('tee');
-            const [color, setColor] = useState('#ec4899');
-            const key = `${cat}_${style}_${color}`;
-            const unlocked = bank.has(key);
-            return (
-                <div className="h-full flex flex-col gap-2">
-                    <div className="flex justify-between items-center px-2">
-                        <h2 className="text-xl font-black text-rose-500 uppercase">Shop</h2>
-                        <button onClick={() => setView('mirror')} className="bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase">Mirror</button>
+                    <div className="w-full max-w-[200px] relative">
+                        <input 
+                            type="number" 
+                            value={input} 
+                            onChange={handleInput} 
+                            className="w-full text-center text-6xl font-black p-4 border-b-8 border-slate-200 focus:border-orange-400 outline-none transition-all placeholder:text-slate-100" 
+                            autoFocus 
+                            placeholder="0"
+                        />
                     </div>
-                    <div className="flex gap-1 overflow-x-auto pb-1 px-1 scrollbar-hide">
-                        {Object.keys(ASSETS).map(t => <button key={t} onClick={() => {setCat(t); setStyle(Object.keys(ASSETS[t])[0]);}} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase shrink-0 ${cat === t ? 'bg-rose-400 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>{t}</button>)}
+                    
+                    <div className="mt-8 h-12 flex items-center justify-center">
+                        {streak >= 5 && (
+                            <div className="bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full font-black text-sm animate-bounce">
+                                🏆 WINNING STREAK!
+                            </div>
+                        )}
                     </div>
-                    <div className="flex-1 bg-slate-50 rounded-3xl p-1 overflow-y-auto scrollbar-hide">
-                        <div className="grid grid-cols-2 gap-1">
-                            {Object.entries(ASSETS[cat]).map(([k, itm]) => <button key={k} onClick={() => setStyle(k)} className={`bg-white rounded-2xl border-4 min-h-[160px] flex items-center justify-center p-2 ${style === k ? 'border-rose-400' : 'border-transparent'}`}>{cat === 'acc' ? <div className="text-6xl">{itm}</div> : <svg viewBox="0 0 100 150" className="w-full h-full"><path d={itm.p} fill={color} stroke="#333" strokeWidth="3" /></svg>}</button>)}
-                        </div>
-                    </div>
-                    <div className="bg-white p-2 rounded-2xl border flex flex-wrap gap-2 justify-center">
-                        {COLORS.map(c => <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 border-white ${color === c ? 'ring-2 ring-rose-400 scale-110' : ''}`} style={{backgroundColor: c}} />)}
-                    </div>
-                    <button onClick={() => { if(unlocked) setView('mirror'); else { setPendingUnlock(key); setView('unlock'); } }} className={`w-full p-6 rounded-[2rem] text-white font-black text-xl shadow-lg active:scale-95 transition-all ${unlocked ? 'bg-emerald-500' : 'bg-rose-400'}`}>{unlocked ? 'Style Now!' : 'Math Challenge'}</button>
                 </div>
             );
-        }
+        };
 
-        function FamilyChallenge({ onComplete }) {
-            const [prob, setProb] = useState(null);
-            const [ans, setAns] = useState('');
-            useEffect(() => {
-                const a = Math.floor(Math.random()*5)+2, b = Math.floor(Math.random()*5)+2;
-                setProb({ q: `${a} + ${b}`, a: a+b });
-            }, []);
-            if (!prob) return null;
+        const nextStreakBatch = (streak, i) => streak > 0 && Math.floor(streak / 5) > 0;
+
+        const SpellingBee = ({ addXp }) => {
+            const [idx, setIdx] = useState(0);
+            const [diff, setDiff] = useState('easy');
+            const [input, setInput] = useState('');
+            const word = SPELLING_WORDS[idx];
+
+            const scramble = useMemo(() => word.word.split('').sort(() => Math.random() - 0.5).join(' '), [word]);
+
+            const handleType = (l) => {
+                const next = input + l;
+                if (word.word.startsWith(next)) {
+                    setInput(next);
+                    if (next === word.word) {
+                        addXp(25);
+                        setTimeout(() => { setIdx(i => (i + 1) % SPELLING_WORDS.length); setInput(''); }, 800);
+                    }
+                }
+            };
+
             return (
-                <div className="text-center py-8 h-full flex flex-col justify-center px-4">
-                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-2 border-rose-50">
-                        <h2 className="text-xs font-black text-rose-400 uppercase tracking-widest mb-10">Unlock Item</h2>
-                        <div className="text-6xl font-black text-slate-700 mb-10">{prob.q} = ?</div>
-                        <input type="number" autoFocus className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-2 border-rose-100" onChange={(e) => { if(parseInt(e.target.value) === prob.a) onComplete(); }} />
+                <div className="text-center">
+                    <div className="flex justify-center gap-2 mb-8">
+                        {['easy', 'medium', 'hard'].map(d => (
+                            <button key={d} onClick={() => { setDiff(d); setInput(''); }} className={`px-4 py-1 rounded-full text-[10px] font-black uppercase ${diff === d ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{d}</button>
+                        ))}
+                    </div>
+                    <div className="h-40 flex items-center justify-center text-[120px] mb-8 animate-bounce-slow">
+                        {diff === 'hard' ? '❓' : word.image}
+                    </div>
+                    <div className="text-2xl font-black tracking-widest text-slate-300 mb-8 uppercase">
+                        {(diff === 'easy' || diff === 'hard') ? scramble : '___ ___ ___'}
+                    </div>
+                    <div className="flex justify-center gap-2 mb-10">
+                        {word.word.split('').map((l, i) => (
+                            <div key={i} className={`w-10 h-14 border-b-4 flex items-center justify-center text-3xl font-black ${input[i] ? 'border-pink-500 text-pink-600' : 'border-slate-100'}`}>{input[i] || ''}</div>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-6 gap-2">
+                        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').map(l => (
+                            <button key={l} onClick={() => handleType(l)} className="h-12 bg-slate-50 rounded-xl font-black text-slate-700 active:bg-pink-100">{l}</button>
+                        ))}
                     </div>
                 </div>
             );
-        }
+        };
+
+        const MirrorView = ({ outfit, bank, setOutfit, setView }) => (
+            <div className="h-full flex flex-col">
+                <div className="h-64 bg-sky-50 rounded-[3rem] mb-4 flex items-center justify-center p-4">
+                    <svg viewBox="0 0 100 150" className="h-full drop-shadow-lg overflow-visible">
+                        <rect x="38" y="65" width="24" height="55" rx="10" fill="#ffdbac" stroke="#333" />
+                        <circle cx="50" cy="48" r="18" fill="#ffdbac" stroke="#333" />
+                        <path d={ASSETS.shoes.snkr.p} fill={outfit.shoes.c} stroke="#333" />
+                        <path d={ASSETS.pants.jeans.p} fill={outfit.pants.c} stroke="#333" />
+                        <path d={ASSETS.shirt.tee.p} fill={outfit.shirt.c} stroke="#333" />
+                        <path d={ASSETS.hair.bob.p} fill={outfit.hair.c} stroke="#333" />
+                    </svg>
+                </div>
+                <button onClick={() => setView('menu')} className="w-full p-6 bg-rose-400 text-white rounded-3xl font-black shadow-lg">Back to Adventure</button>
+            </div>
+        );
+
+        const MenuBtn = ({ color, icon, title, onClick }) => (
+            <button onClick={onClick} className={`${color} w-full p-8 rounded-[2.5rem] text-white flex items-center gap-6 shadow-xl active:scale-95 transition-all`}>
+                <div className="bg-white/20 p-4 rounded-3xl text-3xl">{icon}</div>
+                <div className="font-black text-2xl tracking-tight">{title}</div>
+            </button>
+        );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
-
-        // Initialize Lucide icons after render
-        setTimeout(() => { lucide.createIcons(); }, 100);
     </script>
 </body>
 </html>
