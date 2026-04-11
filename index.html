@@ -1,515 +1,345 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Lock, Star, Sparkles, ShoppingBag } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lily's Learning Adventure</title>
+    <!-- React and Babel for browser-side JSX transformation -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        body { font-family: 'Nunito', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="root"></div>
 
-// --- Configuration & Data ---
-const SPELLING_WORDS = [
-  { word: 'APPLE', image: '🍎' }, { word: 'CAT', image: '🐱' }, { word: 'DOG', image: '🐶' },
-  { word: 'FISH', image: '🐟' }, { word: 'BIRD', image: '🐦' }, { word: 'SUN', image: '☀️' },
-  { word: 'MOON', image: '🌙' }, { word: 'TREE', image: '🌳' }, { word: 'FROG', image: '🐸' },
-  { word: 'CAKE', image: '🍰' }, { word: 'DUCK', image: '🦆' }, { word: 'BALL', image: '⚽' },
-  { word: 'BOAT', image: '⛵' }, { word: 'BEAR', image: '🧸' }, { word: 'ROSE', image: '🌹' }
-];
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-const COLORS = ['#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#475569', '#ffffff', '#000000'];
+        // --- Assets & Data ---
+        const generateWordList = () => {
+            const words = ['CAT', 'DOG', 'SUN', 'BOX', 'RED', 'TEN', 'PIG', 'HAT', 'FLY', 'JAM', 'FISH', 'BIRD', 'MOON', 'TREE', 'FROG', 'CAKE', 'DUCK', 'BALL', 'BOAT', 'BEAR', 'ROSE', 'STAR', 'APPLE', 'SMILE', 'GRASS', 'MUSIC', 'HEART', 'LIGHT', 'OCEAN', 'QUEEN', 'TIGER', 'WATER', 'HOUSE', 'CHAIR', 'FRUIT', 'CANDY', 'PLANT', 'TRUCK', 'BEACH', 'SWEET', 'EARTH', 'SPACE', 'CLOUD', 'RAINBOW', 'BUTTERFLY'];
+            return words.sort(() => Math.random() - 0.5);
+        };
 
-const ASSETS = {
-  hair: {
-    bob: { label: 'Bob', p: 'M 32 40 Q 32 15 50 15 Q 68 15 68 40 L 75 65 L 25 65 Z' },
-    pony: { label: 'Pony', p: 'M 32 40 Q 50 18 68 40 M 68 35 Q 85 30 85 60 L 68 55' },
-    braids: { label: 'Braids', p: 'M 32 40 Q 50 20 68 40 M 35 60 L 30 85 M 65 60 L 70 85' },
-    long: { label: 'Long', p: 'M 30 40 Q 50 10 70 40 L 75 90 L 25 90 Z' },
-    curly: { label: 'Curly', p: 'M 30 40 Q 30 10 50 10 Q 70 10 70 40 Q 80 50 70 60 Q 80 70 70 80 L 30 80 Q 20 70 30 60 Q 20 50 30 40' }
-  },
-  hat: {
-    beanie: { label: 'Beanie', p: 'M 32 35 Q 50 10 68 35 L 70 45 L 30 45 Z' },
-    sunhat: { label: 'Sunhat', p: 'M 35 35 Q 50 15 65 35 L 85 45 L 15 45 Z' },
-    crown: { label: 'Crown', p: 'M 30 45 L 30 25 L 40 35 L 50 20 L 60 35 L 70 25 L 70 45 Z' },
-    cap: { label: 'Cap', p: 'M 35 35 Q 50 15 65 35 L 65 45 L 85 45 L 85 50 L 35 50 Z' },
-    party: { label: 'Party', p: 'M 50 10 L 70 45 L 30 45 Z' }
-  },
-  shirt: {
-    tee: { label: 'T-Shirt', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 25 75 L 32 85 Z M 65 65 L 75 75 L 68 85 Z' },
-    tank: { label: 'Tank', p: 'M 40 65 L 60 65 L 62 95 L 38 95 Z' },
-    hoodie: { label: 'Hoodie', p: 'M 35 65 L 65 65 L 65 98 L 35 98 Z M 40 50 Q 50 35 60 50 L 60 65 L 40 65 Z' },
-    dress: { label: 'Dress', p: 'M 40 65 L 60 65 L 75 115 L 25 115 Z' },
-    sweater: { label: 'Sweater', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 20 85 L 28 95 Z M 65 65 L 80 85 L 72 95 Z' }
-  },
-  jacket: {
-    coat: { label: 'Coat', p: 'M 32 65 L 68 65 L 70 110 L 30 110 Z M 32 65 L 20 90 L 30 100 Z M 68 65 L 80 90 L 70 100 Z' },
-    vest: { label: 'Vest', p: 'M 38 65 L 62 65 L 62 95 L 38 95 Z' },
-    denim: { label: 'Denim', p: 'M 35 65 L 65 65 L 65 90 L 35 90 Z' },
-    cape: { label: 'Cape', p: 'M 40 65 Q 50 60 60 65 L 80 110 L 20 110 Z' },
-    bolero: { label: 'Bolero', p: 'M 35 65 L 65 65 L 65 80 L 35 80 Z' }
-  },
-  pants: {
-    jeans: { label: 'Jeans', p: 'M 37 92 L 63 92 L 63 125 L 52 125 L 52 108 L 48 108 L 48 125 L 37 125 Z' },
-    skirt: { label: 'Skirt', p: 'M 35 92 L 65 92 L 75 120 L 25 120 Z' },
-    shorts: { label: 'Shorts', p: 'M 37 92 L 63 92 L 63 105 L 52 105 L 52 100 L 48 100 L 48 105 L 37 105 Z' },
-    leggings: { label: 'Leggings', p: 'M 38 92 L 62 92 L 62 128 L 51 128 L 51 105 L 49 105 L 49 128 L 38 128 Z' },
-    tutu: { label: 'Tutu', p: 'M 35 92 L 65 92 Q 85 110 65 115 L 35 115 Q 15 110 35 92' }
-  },
-  shoes: {
-    snkr: { label: 'Sneaks', p: 'M 35 130 L 48 130 L 49 142 L 33 142 Z M 52 130 L 65 130 L 67 142 L 51 142 Z' },
-    boot: { label: 'Boots', p: 'M 35 122 L 48 122 L 48 142 L 33 142 Z M 52 122 L 65 122 L 65 142 L 50 142 Z' },
-    flats: { label: 'Flats', p: 'M 37 135 L 48 135 L 48 142 L 35 142 Z M 52 135 L 63 135 L 63 142 L 50 142 Z' },
-    heels: { label: 'Heels', p: 'M 37 130 L 48 130 L 48 142 L 45 142 L 45 135 L 37 135 Z M 52 130 L 63 130 L 63 142 L 60 142 L 60 135 L 52 135 Z' },
-    sandals: { label: 'Sandals', p: 'M 35 138 L 65 138 L 65 142 L 35 142 Z' }
-  },
-  acc: {
-    cat: '🐱', wand: '🪄', glasses: '👓', flower: '🌸', phone: '📱', 
-    puppy: '🐶', treat: '🍦', book: '📖', guitar: '🎸', star: '⭐', 
-    butterfly: '🦋', bag: '👜', camera: '📷', pizza: '🍕', balloon: '🎈'
-  }
-};
+        const COLORS = ['#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#475569', '#ffffff', '#000000'];
 
-export default function App() {
-  const [view, setView] = useState('menu');
-  const [lvl, setLvl] = useState(1);
-  const [xp, setXp] = useState(0);
-  
-  const [bank, setBank] = useState(new Set(['hair_bob_#4b2c20', 'shirt_tee_#ec4899', 'pants_jeans_#3b82f6', 'shoes_snkr_#475569']));
-  const [currentOutfit, setCurrentOutfit] = useState({
-    hair: { s: 'bob', c: '#4b2c20' },
-    hat: null,
-    shirt: { s: 'tee', c: '#ec4899' },
-    jacket: null,
-    pants: { s: 'jeans', c: '#3b82f6' },
-    shoes: { s: 'snkr', c: '#475569' },
-    acc: null
-  });
-
-  const [pendingUnlock, setPendingUnlock] = useState(null);
-  const [selectedGardenNum, setSelectedGardenNum] = useState(null);
-
-  const addXp = (amt) => {
-    let nextXp = xp + amt;
-    if (nextXp >= 100) {
-      setLvl(l => l + 1);
-      setXp(nextXp - 100);
-    } else setXp(nextXp);
-  };
-
-  const handleUnlockItem = (itemKey) => {
-    setBank(prev => new Set([...prev, itemKey]));
-    const [cat, s, c] = itemKey.split('_');
-    setCurrentOutfit(prev => ({ ...prev, [cat]: { s, c } }));
-    setView('mirror');
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-['Nunito'] select-none">
-      <div className="w-full max-w-md h-[850px] bg-white rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col border-[12px] border-slate-50">
-        
-        <div className="flex justify-between items-center p-6 z-50">
-          {view !== 'menu' && (
-            <button onClick={() => setView('menu')} className="flex items-center gap-1 text-slate-400 font-black hover:text-pink-500 transition-colors tracking-widest text-xs uppercase">
-              <ChevronLeft size={18} strokeWidth={3} /> Back
-            </button>
-          )}
-          <div className="bg-indigo-50 px-4 py-1 rounded-full border-2 border-indigo-100 flex items-center gap-2 ml-auto">
-            <span className="text-indigo-600 font-black text-[10px] uppercase">Level {lvl}</span>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-hide">
-          {view === 'menu' && <MainMenu setView={setView} />}
-          {view === 'garden_select' && <GardenPicker onSelect={(n) => { setSelectedGardenNum(n); setView('garden'); }} />}
-          {view === 'garden' && <MathGarden addXp={addXp} focusNum={selectedGardenNum} />}
-          {view === 'spelling' && <SpellingBee addXp={addXp} />}
-          {view === 'facts' && <MathFacts addXp={addXp} count={10} onComplete={() => setView('menu')} />}
-          {view === 'stylist' && <StylistSelection setView={setView} bank={bank} setPendingUnlock={setPendingUnlock} />}
-          {view === 'unlock' && <FamilyChallenge onComplete={() => handleUnlockItem(pendingUnlock)} />}
-          {view === 'mirror' && <MirrorRoom outfit={currentOutfit} setOutfit={setCurrentOutfit} bank={bank} setView={setView} />}
-        </div>
-
-        <div className="h-2 w-full bg-slate-100">
-          <div className="h-full bg-pink-500 transition-all duration-500" style={{ width: `${xp}%` }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- Menu ---
-function MainMenu({ setView }) {
-  return (
-    <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-bottom-4">
-      <h1 className="text-4xl font-black text-slate-800 text-center mb-8">Hi Lily!</h1>
-      <MenuBtn color="bg-indigo-500" icon="🌻" title="Math Garden" onClick={() => setView('garden_select')} />
-      <MenuBtn color="bg-pink-500" icon="🐝" title="Spelling Bee" onClick={() => setView('spelling')} />
-      <MenuBtn color="bg-orange-400" icon="🔢" title="Math Facts" onClick={() => setView('facts')} />
-      <MenuBtn color="bg-rose-400" icon="👗" title="Style Mirror" onClick={() => setView('mirror')} />
-    </div>
-  );
-}
-
-function MenuBtn({ color, icon, title, onClick }) {
-  return (
-    <button onClick={onClick} className={`${color} w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg active:scale-95 transition-all`}>
-      <div className="bg-white/20 p-3 rounded-2xl text-2xl">{icon}</div>
-      <div className="font-black text-xl">{title}</div>
-    </button>
-  );
-}
-
-// --- Games ---
-
-function GardenPicker({ onSelect }) {
-  return (
-    <div className="text-center pt-4">
-      <h2 className="text-2xl font-black text-indigo-600 mb-8">Choose a Number!</h2>
-      <div className="grid grid-cols-5 gap-3">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-          <button key={n} onClick={() => onSelect(n)} className="h-16 bg-white border-4 border-indigo-100 rounded-2xl flex items-center justify-center text-2xl font-black text-indigo-500 hover:border-indigo-400 shadow-sm active:scale-90 transition-all">
-            {n}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MathGarden({ addXp, focusNum }) {
-  const [p, setP] = useState({ a: focusNum, b: 1, op: '+', ans: focusNum + 1 });
-  const [garden, setGarden] = useState([]);
-  
-  const next = () => {
-    const op = Math.random() > 0.5 ? '+' : '-';
-    let b;
-    if (op === '+') {
-      b = Math.floor(Math.random() * 9) + 1;
-      setP({ a: focusNum, b, op, ans: focusNum + b });
-    } else {
-      b = Math.floor(Math.random() * focusNum) + 1;
-      setP({ a: focusNum, b, op, ans: focusNum - b });
-    }
-  };
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 bg-sky-50 rounded-[2.5rem] relative overflow-hidden mb-6 border-4 border-white shadow-inner">
-        <div className="absolute inset-0 bg-emerald-400/10" style={{ top: '60%' }}></div>
-        {garden.map((f, i) => (
-          <div key={i} className="absolute text-4xl animate-bounce" style={{ left: `${f.x}%`, top: `${f.y}%` }}>
-            {f.type}
-          </div>
-        ))}
-      </div>
-      <div className="text-center p-6 bg-white rounded-[2rem] border-4 border-slate-50 shadow-xl">
-        <div className="text-5xl font-black mb-6 text-indigo-600">{p.a} {p.op} {p.b} = ?</div>
-        <input type="number" autoFocus className="w-full text-center text-4xl p-4 bg-slate-50 rounded-2xl outline-none border-4 border-indigo-100 focus:border-indigo-400" 
-          onChange={(e) => {
-            if (parseInt(e.target.value) === p.ans) {
-              const items = ['🌻', '🌷', '🌸', '🌼', '🐝'];
-              setGarden([...garden, { x: Math.random()*80+10, y: Math.random()*25+60, type: items[Math.floor(Math.random()*items.length)] }]);
-              addXp(10);
-              e.target.value = '';
-              next();
+        const ASSETS = {
+            hair: {
+                bob: { label: 'Bob', p: 'M 32 40 Q 32 15 50 15 Q 68 15 68 40 L 75 65 L 25 65 Z' },
+                pony: { label: 'Pony', p: 'M 32 40 Q 50 18 68 40 M 68 35 Q 85 30 85 60 L 68 55' },
+                braids: { label: 'Braids', p: 'M 32 40 Q 50 20 68 40 M 35 60 L 30 85 M 65 60 L 70 85' },
+                long: { label: 'Long', p: 'M 30 40 Q 50 10 70 40 L 75 90 L 25 90 Z' },
+                curly: { label: 'Curly', p: 'M 30 40 Q 30 10 50 10 Q 70 10 70 40 Q 80 50 70 60 Q 80 70 70 80 L 30 80 Q 20 70 30 60 Q 20 50 30 40' }
+            },
+            shirt: {
+                tee: { label: 'T-Shirt', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 25 75 L 32 85 Z M 65 65 L 75 75 L 68 85 Z' },
+                tank: { label: 'Tank', p: 'M 40 65 L 60 65 L 62 95 L 38 95 Z' },
+                hoodie: { label: 'Hoodie', p: 'M 35 65 L 65 65 L 65 98 L 35 98 Z M 40 50 Q 50 35 60 50 L 60 65 L 40 65 Z' },
+                dress: { label: 'Dress', p: 'M 40 65 L 60 65 L 75 115 L 25 115 Z' },
+                sweater: { label: 'Sweater', p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 20 85 L 28 95 Z M 65 65 L 80 85 L 72 95 Z' }
+            },
+            pants: {
+                jeans: { label: 'Jeans', p: 'M 37 92 L 63 92 L 63 125 L 52 125 L 52 108 L 48 108 L 48 125 L 37 125 Z' },
+                skirt: { label: 'Skirt', p: 'M 35 92 L 65 92 L 75 120 L 25 120 Z' },
+                shorts: { label: 'Shorts', p: 'M 37 92 L 63 92 L 63 105 L 52 105 L 52 100 L 48 100 L 48 105 L 37 105 Z' },
+                leggings: { label: 'Leggings', p: 'M 38 92 L 62 92 L 62 128 L 51 128 L 51 105 L 49 105 L 49 128 L 38 128 Z' },
+                tutu: { label: 'Tutu', p: 'M 35 92 L 65 92 Q 85 110 65 115 L 35 115 Q 15 110 35 92' }
+            },
+            shoes: {
+                snkr: { label: 'Sneaks', p: 'M 35 130 L 48 130 L 49 142 L 33 142 Z M 52 130 L 65 130 L 67 142 L 51 142 Z' },
+                boot: { label: 'Boots', p: 'M 35 122 L 48 122 L 48 142 L 33 142 Z M 52 122 L 65 122 L 65 142 L 50 142 Z' },
+                flats: { label: 'Flats', p: 'M 37 135 L 48 135 L 48 142 L 35 142 Z M 52 135 L 63 135 L 63 142 L 50 142 Z' },
+                heels: { label: 'Heels', p: 'M 37 130 L 48 130 L 48 142 L 45 142 L 45 135 L 37 135 Z M 52 130 L 63 130 L 63 142 L 60 142 L 60 135 L 52 135 Z' },
+                sandals: { label: 'Sandals', p: 'M 35 138 L 65 138 L 65 142 L 35 142 Z' }
+            },
+            acc: {
+                cat: '🐱', wand: '🪄', glasses: '👓', flower: '🌸', phone: '📱', 
+                puppy: '🐶', treat: '🍦', book: '📖', guitar: '🎸', star: '⭐', 
+                butterfly: '🦋', bag: '👜', camera: '📷', pizza: '🍕', balloon: '🎈'
             }
-          }} 
-        />
-      </div>
-    </div>
-  );
-}
+        };
 
-function SpellingBee({ addXp }) {
-  const [wordIdx, setWordIdx] = useState(0);
-  const [input, setInput] = useState([]);
-  const [scramble, setScramble] = useState([]);
-  const wordObj = SPELLING_WORDS[wordIdx];
-
-  const resetWord = (idx) => {
-    const word = SPELLING_WORDS[idx].word;
-    setScramble(word.split('').sort(() => Math.random() - 0.5));
-    setInput([]);
-  };
-
-  useEffect(() => { resetWord(wordIdx); }, [wordIdx]);
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      const char = e.key.toUpperCase();
-      const idxInScramble = scramble.indexOf(char);
-      if (idxInScramble !== -1) handleChar(char, idxInScramble);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [scramble, input]);
-
-  const handleChar = (char, idx) => {
-    const expected = wordObj.word[input.length];
-    if (char === expected) {
-      const newInput = [...input, char];
-      setInput(newInput);
-      const newScramble = [...scramble];
-      newScramble.splice(idx, 1);
-      setScramble(newScramble);
-      if (newInput.join('') === wordObj.word) {
-        addXp(20);
-        setTimeout(() => setWordIdx((wordIdx + 1) % SPELLING_WORDS.length), 500);
-      }
-    }
-  };
-
-  return (
-    <div className="text-center pt-4">
-      <div className="text-9xl mb-8 bg-pink-50 w-48 h-48 flex items-center justify-center rounded-[3rem] mx-auto border-4 border-pink-100 shadow-inner">
-        {wordObj.image}
-      </div>
-      <div className="flex justify-center gap-2 mb-8 h-16">
-        {wordObj.word.split('').map((_, i) => (
-          <div key={i} className={`w-12 h-16 border-b-8 flex items-center justify-center text-4xl font-black ${input[i] ? 'border-pink-500 text-slate-800' : 'border-slate-100'}`}>
-            {input[i] || ''}
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-wrap justify-center gap-3 max-w-xs mx-auto">
-        {scramble.map((char, i) => (
-          <button key={i} onClick={() => handleChar(char, i)} className="w-14 h-14 bg-white border-4 border-pink-100 rounded-2xl text-2xl font-black text-pink-500 shadow-md active:scale-90 transition-all">
-            {char}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MathFacts({ addXp, onComplete, count }) {
-  const [current, setCurrent] = useState({ q: '1 + 1', a: 2 });
-  const [step, setStep] = useState(0);
-  const [input, setInput] = useState('');
-
-  const generateProblem = () => {
-    const op = Math.random() > 0.5 ? '+' : '-';
-    let a, b, ans;
-    if (op === '+') {
-      a = Math.floor(Math.random() * 6) + 1;
-      b = Math.floor(Math.random() * 4) + 1;
-      ans = a + b;
-    } else {
-      a = Math.floor(Math.random() * 5) + 5;
-      b = Math.floor(Math.random() * 5) + 1;
-      ans = a - b;
-    }
-    return { q: `${a} ${op} ${b}`, a: ans };
-  };
-
-  useEffect(() => { setCurrent(generateProblem()); }, [step]);
-
-  const handleInput = (val) => {
-    setInput(val);
-    if (parseInt(val) === current.a) {
-      if (step < count - 1) {
-        setStep(step + 1);
-        setInput('');
-      } else {
-        addXp(100);
-        onComplete();
-      }
-    }
-  };
-
-  return (
-    <div className="text-center py-4 h-full flex flex-col justify-center">
-      <h2 className="text-2xl font-black text-orange-500 mb-8">Math Explorer</h2>
-      <div className="bg-white p-12 rounded-[3.5rem] border-8 border-orange-50 shadow-xl">
-        <div className="text-6xl font-black text-slate-700 mb-8">{current.q} = ?</div>
-        <input type="number" autoFocus value={input} onChange={(e) => handleInput(e.target.value)}
-          className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-4 border-orange-100" />
-      </div>
-      <div className="mt-12 flex justify-center gap-2">
-        {[...Array(count)].map((_, i) => <div key={i} className={`h-3 w-4 rounded-full transition-all duration-500 ${i <= step ? 'bg-orange-400 w-8' : 'bg-slate-100'}`} />)}
-      </div>
-    </div>
-  );
-}
-
-// --- Stylist Challenge: MATH FAMILIES ---
-
-function FamilyChallenge({ onComplete }) {
-  const [family, setFamily] = useState({ a: 3, b: 4, sum: 7 });
-  const [problems, setProblems] = useState([]);
-  const [step, setStep] = useState(0);
-  const [input, setInput] = useState('');
-
-  useEffect(() => {
-    const a = Math.floor(Math.random() * 5) + 1;
-    const b = Math.floor(Math.random() * 5) + 1;
-    const sum = a + b;
-    setFamily({ a, b, sum });
-    setProblems([
-      { q: `${a} + ${b}`, a: sum },
-      { q: `${sum} - ${a}`, a: b },
-      { q: `${b} + ${a}`, a: sum },
-      { q: `${sum} - ${b}`, a: a }
-    ]);
-  }, []);
-
-  const handleInput = (val) => {
-    setInput(val);
-    if (parseInt(val) === problems[step].a) {
-      if (step < problems.length - 1) {
-        setStep(step + 1);
-        setInput('');
-      } else {
-        onComplete();
-      }
-    }
-  };
-
-  if (problems.length === 0) return null;
-
-  return (
-    <div className="text-center py-8 h-full flex flex-col justify-center">
-      <div className="bg-rose-50 p-6 rounded-[2rem] mb-8 border-2 border-rose-100">
-        <h2 className="text-xl font-black text-rose-500 mb-2">Math Family!</h2>
-        <div className="flex justify-center gap-4 text-2xl font-black text-rose-300">
-          <span>{family.a}</span>
-          <span>{family.b}</span>
-          <span>{family.sum}</span>
-        </div>
-      </div>
-      
-      <div className="bg-white p-10 rounded-[3rem] border-8 border-rose-50 shadow-xl">
-        <div className="text-5xl font-black text-slate-700 mb-8 tracking-tighter">
-          {problems[step].q} = ?
-        </div>
-        <input type="number" autoFocus value={input} onChange={(e) => handleInput(e.target.value)}
-          className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-4 border-rose-100" />
-      </div>
-      
-      <div className="mt-12 flex justify-center gap-3">
-        {problems.map((_, i) => (
-          <div key={i} className={`h-4 w-4 rounded-full ${i <= step ? 'bg-rose-400' : 'bg-slate-100'}`} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// --- Wardrobe ---
-
-function StylistSelection({ setView, bank, setPendingUnlock }) {
-  const [cat, setCat] = useState('shirt');
-  const [style, setStyle] = useState('tee');
-  const [color, setColor] = useState('#ec4899');
-
-  const itemKey = `${cat}_${style}_${color}`;
-  const isUnlocked = bank.has(itemKey);
-
-  return (
-    <div className="h-full flex flex-col">
-      <h2 className="text-2xl font-black text-rose-500 mb-4">Lily's Boutique</h2>
-      
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-        {Object.keys(ASSETS).map(t => (
-          <button key={t} onClick={() => {setCat(t); setStyle(Object.keys(ASSETS[t])[0]);}} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${cat === t ? 'bg-rose-400 text-white shadow-md' : 'bg-white text-slate-400 border-2 border-slate-50'}`}>{t}</button>
-        ))}
-      </div>
-
-      <div className="flex-1 bg-slate-50 rounded-[3rem] p-6 mb-4 border-4 border-white shadow-inner flex flex-col gap-6 overflow-y-auto scrollbar-hide">
-        <div className="grid grid-cols-2 gap-4">
-          {Object.entries(ASSETS[cat]).map(([key, item]) => (
-            <button key={key} onClick={() => setStyle(key)} className={`p-4 bg-white rounded-[2rem] border-4 transition-all flex flex-col items-center gap-2 ${style === key ? 'border-rose-400 shadow-md scale-105' : 'border-white'}`}>
-              {cat === 'acc' ? <div className="text-5xl py-2">{item}</div> : (
-                <svg viewBox="0 0 100 150" className="w-full h-24 drop-shadow-sm">
-                  <path d={item.p} fill={color} stroke="#333" strokeWidth="2" />
+        function Doll({ outfit }) {
+            const skin = "#ffdbac";
+            return (
+                <svg viewBox="0 0 100 150" className="w-full h-full drop-shadow-xl overflow-visible">
+                    <rect x="42" y="115" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" />
+                    <rect x="52" y="115" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" />
+                    <rect x="32" y="70" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" transform="rotate(10 32 70)" />
+                    <rect x="62" y="70" width="6" height="25" rx="3" fill={skin} stroke="#333" strokeWidth="1.5" transform="rotate(-10 68 70)" />
+                    <rect x="38" y="65" width="24" height="55" rx="10" fill={skin} stroke="#333" strokeWidth="1.5" />
+                    <circle cx="50" cy="48" r="18" fill={skin} stroke="#333" strokeWidth="1.5" />
+                    <circle cx="44" cy="46" r="2" fill="#000" />
+                    <circle cx="56" cy="46" r="2" fill="#000" />
+                    <path d="M 46 54 Q 50 58 54 54" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" />
+                    {outfit.shoes && <path d={ASSETS.shoes[outfit.shoes.s].p} fill={outfit.shoes.c} stroke="#333" strokeWidth="1.5" />}
+                    {outfit.pants && <path d={ASSETS.pants[outfit.pants.s].p} fill={outfit.pants.c} stroke="#333" strokeWidth="1.5" />}
+                    {outfit.shirt && <path d={ASSETS.shirt[outfit.shirt.s].p} fill={outfit.shirt.c} stroke="#333" strokeWidth="1.5" />}
+                    {outfit.hair && <path d={ASSETS.hair[outfit.hair.s].p} fill={outfit.hair.c} stroke="#333" strokeWidth="1.5" />}
+                    {outfit.acc && <g transform="translate(50, 95)"><text fontSize="30" textAnchor="middle" alignmentBaseline="middle">{ASSETS.acc[outfit.acc.s]}</text></g>}
                 </svg>
-              )}
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{item.label || key}</span>
-            </button>
-          ))}
-        </div>
+            );
+        }
 
-        {cat !== 'acc' && (
-          <div className="flex flex-wrap gap-3 justify-center bg-white p-4 rounded-3xl">
-            {COLORS.map(c => <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 border-white shadow-sm transition-transform ${color === c ? 'scale-125 ring-2 ring-rose-400' : ''}`} style={{backgroundColor: c}} />)}
-          </div>
-        )}
-      </div>
+        function App() {
+            const [view, setView] = useState('menu');
+            const [lvl, setLvl] = useState(1);
+            const [xp, setXp] = useState(0);
+            const [spellingWords] = useState(generateWordList());
+            const [bank, setBank] = useState(new Set(['hair_bob_#4b2c20', 'shirt_tee_#ec4899', 'pants_jeans_#3b82f6', 'shoes_snkr_#475569']));
+            const [currentOutfit, setCurrentOutfit] = useState({
+                hair: { s: 'bob', c: '#4b2c20' }, shirt: { s: 'tee', c: '#ec4899' },
+                pants: { s: 'jeans', c: '#3b82f6' }, shoes: { s: 'snkr', c: '#475569' }, acc: null
+            });
+            const [pendingUnlock, setPendingUnlock] = useState(null);
+            const [selectedGardenNum, setSelectedGardenNum] = useState(null);
 
-      <button onClick={() => { if (isUnlocked) setView('mirror'); else { setPendingUnlock(itemKey); setView('unlock'); } }}
-        className={`w-full p-5 rounded-[2rem] text-white font-black text-xl shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95 ${isUnlocked ? 'bg-emerald-500' : 'bg-rose-400'}`}>
-        {isUnlocked ? <><Sparkles /> Equipped!</> : <><Lock size={20} /> Solve Math Family</>}
-      </button>
-    </div>
-  );
-}
+            const addXp = (amt) => {
+                let nextXp = xp + amt;
+                if (nextXp >= 100) {
+                    setLvl(l => l + 1);
+                    setXp(nextXp - 100);
+                } else setXp(nextXp);
+            };
 
-function MirrorRoom({ outfit, setOutfit, bank, setView }) {
-  const [tab, setTab] = useState('shirt');
-  const bankItems = Array.from(bank).filter(id => id.startsWith(tab));
+            return (
+                <div className="fixed inset-0 bg-slate-100 flex items-center justify-center p-0 select-none">
+                    <div className="w-full h-full max-w-md bg-white shadow-2xl relative overflow-hidden flex flex-col">
+                        <div className="flex justify-between items-center px-4 py-3 bg-white border-b border-slate-100 z-50">
+                            {view !== 'menu' && (
+                                <button onClick={() => setView('menu')} className="text-slate-400 font-black flex items-center text-[10px] uppercase">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i> Back
+                                </button>
+                            )}
+                            <div className="bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 ml-auto font-black text-indigo-600 text-[10px] uppercase">
+                                Level {lvl}
+                            </div>
+                        </div>
 
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-black text-indigo-600">Mirror Room</h2>
-        <button onClick={() => setView('stylist')} className="bg-rose-400 text-white px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-2 shadow-md">
-          <ShoppingBag size={14} /> Shop
-        </button>
-      </div>
+                        <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
+                            {view === 'menu' && <MainMenu setView={setView} />}
+                            {view === 'garden_select' && <GardenPicker onSelect={(n) => { setSelectedGardenNum(n); setView('garden'); }} />}
+                            {view === 'garden' && <MathGarden addXp={addXp} focusNum={selectedGardenNum} />}
+                            {view === 'spelling' && <SpellingBee addXp={addXp} words={spellingWords} />}
+                            {view === 'facts' && <MathFacts addXp={addXp} onComplete={() => setView('menu')} />}
+                            {view === 'mirror' && <MirrorRoom outfit={currentOutfit} setOutfit={setCurrentOutfit} bank={bank} setView={setView} />}
+                            {view === 'stylist' && <StylistSelection setView={setView} bank={bank} setPendingUnlock={setPendingUnlock} />}
+                            {view === 'unlock' && <FamilyChallenge onComplete={() => {
+                                setBank(prev => new Set([...prev, pendingUnlock]));
+                                const [cat, s, c] = pendingUnlock.split('_');
+                                setCurrentOutfit(prev => ({ ...prev, [cat]: { s, c } }));
+                                setView('mirror');
+                            }} />}
+                        </div>
 
-      <div className="flex justify-center py-6 mb-4 scale-125 bg-slate-50 rounded-[3rem] border-4 border-white shadow-inner">
-        <Doll outfit={outfit} />
-      </div>
+                        <div className="h-2 w-full bg-slate-100">
+                            <div className="h-full bg-pink-500 transition-all duration-500" style={{ width: `${xp}%` }} />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
 
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-        {Object.keys(ASSETS).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === t ? 'bg-indigo-500 text-white shadow-md' : 'bg-white text-slate-400 border-2 border-slate-50'}`}>{t}</button>
-        ))}
-      </div>
+        function MainMenu({ setView }) {
+            return (
+                <div className="space-y-4 p-4">
+                    <h1 className="text-4xl font-black text-slate-800 text-center mb-10">Hi Lily!</h1>
+                    <button onClick={() => setView('garden_select')} className="bg-indigo-500 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🌻</span> <span className="font-black text-xl">Math Garden</span></button>
+                    <button onClick={() => setView('spelling')} className="bg-pink-500 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🐝</span> <span className="font-black text-xl">Spelling Bee</span></button>
+                    <button onClick={() => setView('facts')} className="bg-orange-400 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">🔢</span> <span className="font-black text-xl">Math Facts</span></button>
+                    <button onClick={() => setView('mirror')} className="bg-rose-400 w-full p-6 rounded-[2rem] text-white flex items-center gap-4 shadow-lg"><span className="text-2xl">👗</span> <span className="font-black text-xl">Mirror</span></button>
+                </div>
+            );
+        }
 
-      <div className="flex-1 bg-white rounded-[2.5rem] p-4 border-4 border-slate-50 shadow-inner grid grid-cols-3 gap-3 content-start overflow-y-auto scrollbar-hide">
-        {bankItems.map(id => {
-          const [category, style, clr] = id.split('_');
-          const isSelected = outfit[category]?.s === style && outfit[category]?.c === clr;
-          return (
-            <button key={id} onClick={() => setOutfit({...outfit, [category]: {s: style, c: clr}})} 
-              className={`p-3 bg-white rounded-3xl border-4 transition-all ${isSelected ? 'border-indigo-400 shadow-md scale-105' : 'border-slate-50 opacity-80'}`}>
-              {category === 'acc' ? <div className="text-3xl p-1">{ASSETS.acc[style]}</div> : (
-                <svg viewBox="0 0 100 150" className="w-full h-12"><path d={ASSETS[category][style].p} fill={clr} stroke="#333" strokeWidth="2" /></svg>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+        function GardenPicker({ onSelect }) {
+            return (
+                <div className="text-center pt-4">
+                    <h2 className="text-2xl font-black text-indigo-600 mb-6 uppercase">Choose a Number!</h2>
+                    <div className="grid grid-cols-5 gap-2 px-2">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                            <button key={n} onClick={() => onSelect(n)} className="h-16 bg-white border-2 border-indigo-100 rounded-2xl flex items-center justify-center text-2xl font-black text-indigo-500 shadow-sm active:scale-90">{n}</button>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
 
-function Doll({ outfit }) {
-  const s = "#ffdbac";
-  return (
-    <svg viewBox="0 0 100 150" className="w-32 h-48 drop-shadow-xl overflow-visible">
-      {/* Body */}
-      <rect x="41" y="115" width="7" height="25" rx="3" fill={s} stroke="#333" strokeWidth="1.5" />
-      <rect x="52" y="115" width="7" height="25" rx="3" fill={s} stroke="#333" strokeWidth="1.5" />
-      <rect x="30" y="70" width="7" height="30" rx="3" fill={s} stroke="#333" strokeWidth="1.5" transform="rotate(15 30 70)" />
-      <rect x="63" y="70" width="7" height="30" rx="3" fill={s} stroke="#333" strokeWidth="1.5" transform="rotate(-15 70 70)" />
-      <rect x="38" y="65" width="24" height="55" rx="12" fill={s} stroke="#333" strokeWidth="1.5" />
-      <circle cx="50" cy="48" r="18" fill={s} stroke="#333" strokeWidth="1.5" />
-      
-      {/* BIGGER FACE */}
-      <circle cx="43" cy="46" r="2.5" fill="#000" />
-      <circle cx="57" cy="46" r="2.5" fill="#000" />
-      <path d="M 44 54 Q 50 60 56 54" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="40" cy="52" r="3" fill="#f472b6" fillOpacity="0.4" />
-      <circle cx="60" cy="52" r="3" fill="#f472b6" fillOpacity="0.4" />
-      
-      {/* Clothing Layers */}
-      {outfit.shoes?.s && <path d={ASSETS.shoes[outfit.shoes.s].p} fill={outfit.shoes.c} stroke="#333" strokeWidth="1.5" />}
-      {outfit.pants?.s && <path d={ASSETS.pants[outfit.pants.s].p} fill={outfit.pants.c} stroke="#333" strokeWidth="1.5" />}
-      {outfit.shirt?.s && <path d={ASSETS.shirt[outfit.shirt.s].p} fill={outfit.shirt.c} stroke="#333" strokeWidth="1.5" />}
-      {outfit.jacket?.s && <path d={ASSETS.jacket[outfit.jacket.s].p} fill={outfit.jacket.c} stroke="#333" strokeWidth="1.5" />}
-      {outfit.hair?.s && <path d={ASSETS.hair[outfit.hair.s].p} fill={outfit.hair.c} stroke="#333" strokeWidth="1.5" />}
-      {outfit.hat?.s && <path d={ASSETS.hat[outfit.hat.s].p} fill={outfit.hat.c} stroke="#333" strokeWidth="1.5" />}
-      
-      {outfit.acc?.s && (
-        <g transform="translate(50, 95)">
-          <text fontSize="25" textAnchor="middle" alignmentBaseline="middle" className="drop-shadow-sm">{ASSETS.acc[outfit.acc.s]}</text>
-        </g>
-      )}
-    </svg>
-  );
-}
+        function MathGarden({ addXp, focusNum }) {
+            const [p, setP] = useState({ a: focusNum, b: 1, op: '+', ans: focusNum + 1 });
+            const [garden, setGarden] = useState([]);
+            const next = () => {
+                const op = Math.random() > 0.5 ? '+' : '-';
+                let b = op === '+' ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * focusNum) + 1;
+                setP({ a: focusNum, b, op, ans: op === '+' ? focusNum + b : focusNum - b });
+            };
+            return (
+                <div className="h-full flex flex-col p-2">
+                    <div className="flex-1 bg-sky-50 rounded-[2.5rem] relative overflow-hidden mb-4 shadow-inner border border-slate-100">
+                        {garden.map((f, i) => <div key={i} className="absolute text-4xl animate-bounce" style={{ left: `${f.x}%`, top: `${f.y}%` }}>{f.type}</div>)}
+                    </div>
+                    <div className="text-center p-6 bg-white rounded-3xl shadow-xl border border-slate-50">
+                        <div className="text-5xl font-black mb-6 text-indigo-600">{p.a} {p.op} {p.b} = ?</div>
+                        <input type="number" autoFocus className="w-full text-center text-4xl p-4 bg-slate-50 rounded-2xl outline-none border-2 border-indigo-100" 
+                            onChange={(e) => {
+                                if (parseInt(e.target.value) === p.ans) {
+                                    setGarden([...garden, { x: Math.random()*80+10, y: Math.random()*25+60, type: ['🌻', '🌷', '🌸', '🌼', '🐝'][Math.floor(Math.random()*5)] }]);
+                                    addXp(10); e.target.value = ''; next();
+                                }
+                            }} />
+                    </div>
+                </div>
+            );
+        }
+
+        function SpellingBee({ addXp, words }) {
+            const [idx, setIdx] = useState(0);
+            const [input, setInput] = useState([]);
+            const [scramble, setScramble] = useState([]);
+            const word = words[idx];
+
+            useEffect(() => {
+                const s = word.split('').map((c, i) => ({ c, i })).sort(() => Math.random() - 0.5);
+                setScramble(s); setInput([]);
+            }, [idx]);
+
+            const handle = (obj, i) => {
+                if (obj.c === word[input.length]) {
+                    const next = [...input, obj.c];
+                    setInput(next);
+                    const nextS = [...scramble]; nextS.splice(i, 1); setScramble(nextS);
+                    if (next.join('') === word) { addXp(20); setTimeout(() => setIdx(v => (v + 1) % words.length), 600); }
+                }
+            };
+
+            return (
+                <div className="text-center pt-8">
+                    <div className="text-xl font-black text-pink-500 mb-8 uppercase tracking-widest">Spell It!</div>
+                    <div className="flex flex-wrap justify-center gap-2 mb-12 min-h-[64px]">
+                        {word.split('').map((_, i) => <div key={i} className={`w-10 h-14 border-b-4 flex items-center justify-center text-4xl font-black ${input[i] ? 'border-pink-500 text-slate-800' : 'border-slate-100'}`}>{input[i] || ''}</div>)}
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-2 max-w-xs mx-auto">
+                        {scramble.map((o, i) => <button key={`${idx}-${o.i}`} onClick={() => handle(o, i)} className="w-14 h-14 bg-white border-2 border-pink-100 rounded-2xl text-2xl font-black text-pink-500 shadow-md">{o.c}</button>)}
+                    </div>
+                </div>
+            );
+        }
+
+        function MathFacts({ addXp, onComplete }) {
+            const [q, setQ] = useState({ q: '', a: 0 });
+            const [count, setCount] = useState(0);
+            const next = () => {
+                const a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1;
+                setQ({ q: `${a} + ${b}`, a: a+b });
+            };
+            useEffect(() => next(), [count]);
+            return (
+                <div className="text-center py-12">
+                    <div className="bg-white p-12 rounded-[3.5rem] shadow-xl border border-slate-50">
+                        <div className="text-6xl font-black text-slate-700 mb-8">{q.q} = ?</div>
+                        <input type="number" autoFocus className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-2 border-orange-100" 
+                            onChange={(e) => { if(parseInt(e.target.value) === q.a) { if(count < 9) {setCount(v=>v+1); e.target.value='';} else {addXp(100); onComplete();} } }} />
+                    </div>
+                </div>
+            );
+        }
+
+        function MirrorRoom({ outfit, setOutfit, bank, setView }) {
+            const [tab, setTab] = useState('shirt');
+            const items = Array.from(bank).filter(id => id.startsWith(tab));
+            return (
+                <div className="h-full flex flex-col gap-2">
+                    <div className="flex justify-between items-center px-2">
+                        <h2 className="text-xl font-black text-indigo-600 uppercase">Mirror</h2>
+                        <button onClick={() => setView('stylist')} className="bg-rose-400 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-1">Boutique</button>
+                    </div>
+                    <div className="bg-sky-50 rounded-3xl py-4 flex justify-center shrink-0 border border-white shadow-inner">
+                        <div className="h-52 w-52"><Doll outfit={outfit} /></div>
+                    </div>
+                    <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide shrink-0 px-1">
+                        {Object.keys(ASSETS).map(t => (
+                            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase shrink-0 transition-all ${tab === t ? 'bg-indigo-500 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>{t}</button>
+                        ))}
+                    </div>
+                    <div className="flex-1 bg-white rounded-3xl p-1 border border-slate-50 overflow-y-auto scrollbar-hide">
+                        <div className="grid grid-cols-2 gap-1 content-start">
+                            {items.map(id => {
+                                const [cat, s, clr] = id.split('_');
+                                const sel = outfit[cat]?.s === s && outfit[cat]?.c === clr;
+                                return (
+                                    <button key={id} onClick={() => setOutfit({...outfit, [cat]: {s, c: clr}})} className={`bg-slate-50 rounded-2xl border-4 transition-all min-h-[160px] flex items-center justify-center p-2 ${sel ? 'border-indigo-400' : 'border-transparent'}`}>
+                                        {cat === 'acc' ? <div className="text-6xl">{ASSETS.acc[s]}</div> : <svg viewBox="0 0 100 150" className="w-full h-full"><path d={ASSETS[cat][s].p} fill={clr} stroke="#333" strokeWidth="3" /></svg>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function StylistSelection({ setView, bank, setPendingUnlock }) {
+            const [cat, setCat] = useState('shirt');
+            const [style, setStyle] = useState('tee');
+            const [color, setColor] = useState('#ec4899');
+            const key = `${cat}_${style}_${color}`;
+            const unlocked = bank.has(key);
+            return (
+                <div className="h-full flex flex-col gap-2">
+                    <div className="flex justify-between items-center px-2">
+                        <h2 className="text-xl font-black text-rose-500 uppercase">Shop</h2>
+                        <button onClick={() => setView('mirror')} className="bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase">Mirror</button>
+                    </div>
+                    <div className="flex gap-1 overflow-x-auto pb-1 px-1 scrollbar-hide">
+                        {Object.keys(ASSETS).map(t => <button key={t} onClick={() => {setCat(t); setStyle(Object.keys(ASSETS[t])[0]);}} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase shrink-0 ${cat === t ? 'bg-rose-400 text-white' : 'bg-white text-slate-300 border border-slate-100'}`}>{t}</button>)}
+                    </div>
+                    <div className="flex-1 bg-slate-50 rounded-3xl p-1 overflow-y-auto scrollbar-hide">
+                        <div className="grid grid-cols-2 gap-1">
+                            {Object.entries(ASSETS[cat]).map(([k, itm]) => <button key={k} onClick={() => setStyle(k)} className={`bg-white rounded-2xl border-4 min-h-[160px] flex items-center justify-center p-2 ${style === k ? 'border-rose-400' : 'border-transparent'}`}>{cat === 'acc' ? <div className="text-6xl">{itm}</div> : <svg viewBox="0 0 100 150" className="w-full h-full"><path d={itm.p} fill={color} stroke="#333" strokeWidth="3" /></svg>}</button>)}
+                        </div>
+                    </div>
+                    <div className="bg-white p-2 rounded-2xl border flex flex-wrap gap-2 justify-center">
+                        {COLORS.map(c => <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 border-white ${color === c ? 'ring-2 ring-rose-400 scale-110' : ''}`} style={{backgroundColor: c}} />)}
+                    </div>
+                    <button onClick={() => { if(unlocked) setView('mirror'); else { setPendingUnlock(key); setView('unlock'); } }} className={`w-full p-6 rounded-[2rem] text-white font-black text-xl shadow-lg active:scale-95 transition-all ${unlocked ? 'bg-emerald-500' : 'bg-rose-400'}`}>{unlocked ? 'Style Now!' : 'Math Challenge'}</button>
+                </div>
+            );
+        }
+
+        function FamilyChallenge({ onComplete }) {
+            const [prob, setProb] = useState(null);
+            const [ans, setAns] = useState('');
+            useEffect(() => {
+                const a = Math.floor(Math.random()*5)+2, b = Math.floor(Math.random()*5)+2;
+                setProb({ q: `${a} + ${b}`, a: a+b });
+            }, []);
+            if (!prob) return null;
+            return (
+                <div className="text-center py-8 h-full flex flex-col justify-center px-4">
+                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-2 border-rose-50">
+                        <h2 className="text-xs font-black text-rose-400 uppercase tracking-widest mb-10">Unlock Item</h2>
+                        <div className="text-6xl font-black text-slate-700 mb-10">{prob.q} = ?</div>
+                        <input type="number" autoFocus className="w-full text-center text-5xl p-6 bg-slate-50 rounded-3xl outline-none border-2 border-rose-100" onChange={(e) => { if(parseInt(e.target.value) === prob.a) onComplete(); }} />
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Initialize Lucide icons after render
+        setTimeout(() => { lucide.createIcons(); }, 100);
+    </script>
+</body>
+</html>
