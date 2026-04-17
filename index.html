@@ -38,6 +38,8 @@
         .flip-card-inner {
             transition: transform 0.6s;
             transform-style: preserve-3d;
+            height: 100%;
+            width: 100%;
         }
         .flip-card-flipped { transform: rotateY(180deg); }
         .flip-card-front, .flip-card-back {
@@ -45,6 +47,8 @@
             position: absolute;
             width: 100%;
             height: 100%;
+            top: 0;
+            left: 0;
         }
         .flip-card-back { transform: rotateY(180deg); }
 
@@ -139,7 +143,7 @@
                             <div className="bg-indigo-50 px-4 py-1 rounded-full border border-indigo-100 ml-auto font-black text-indigo-600 text-xs">LVL {lvl}</div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+                        <div className="flex-1 overflow-y-auto p-4 flex flex-col no-scrollbar">
                             {view === 'menu' && (
                                 <div className="space-y-4 pt-4">
                                     <h1 className="text-4xl font-black text-center mb-8 text-slate-800">Lily's Games</h1>
@@ -321,7 +325,7 @@
                             </div>
                         )}
                         
-                        <div className={`flip-card-inner w-full h-full relative ${mode === 'recall' ? 'flip-card-flipped' : ''}`}>
+                        <div className={`flip-card-inner relative ${mode === 'recall' ? 'flip-card-flipped' : ''}`}>
                             <div className="flip-card-front bg-white border-8 border-orange-100 rounded-[3rem] shadow-xl flex flex-col items-center justify-center p-8">
                                 <span className="text-xs font-black text-orange-400 uppercase mb-2 animate-pulse">Snapshot!</span>
                                 <div className="text-6xl font-black text-slate-800">{q.a} + {q.b} = {q.ans}</div>
@@ -354,7 +358,6 @@
             const [diff, setDiff] = useState('easy');
             const [input, setInput] = useState('');
 
-            // Shuffle words only once when game starts
             useEffect(() => {
                 const shuffled = [...RAW_WORDS].sort(() => Math.random() - 0.5);
                 setShuffledList(shuffled);
@@ -365,7 +368,6 @@
             const scramble = useMemo(() => {
                 if (!word) return "";
                 const arr = word.word.split('');
-                // If it's a short word, shuffle until it's actually different if possible
                 let scrambled = "";
                 do {
                     for (let i = arr.length - 1; i > 0; i--) {
@@ -477,7 +479,7 @@
         const MenuBtn = ({ color, icon, title, onClick }) => (
             <button onClick={onClick} className={`${color} w-full p-8 rounded-[2.5rem] text-white flex items-center gap-6 shadow-xl active:scale-95 transition-all`}>
                 <div className="bg-white/20 p-4 rounded-3xl text-3xl">{icon}</div>
-                <div className="font-black text-2xl tracking-tight">{title}</div>
+                <div className="font-black text-2xl tracking-tight text-left">{title}</div>
             </button>
         );
 
