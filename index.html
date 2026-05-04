@@ -108,10 +108,69 @@
         const GARDEN_OBJECTS = ['🌸', '🌻', '🌷', '🌿', '🍄', '🌼', '🌹', '🍀', '🦋', '🐞'];
 
         const ASSETS = {
-            hair: { bob: { p: 'M 32 40 Q 32 15 50 15 Q 68 15 68 40 L 75 65 L 25 65 Z' }, pony: { p: 'M 32 40 Q 50 18 68 40 M 68 35 Q 85 30 85 60 L 68 55' } },
-            shirt: { tee: { p: 'M 35 65 L 65 65 L 65 95 L 35 95 Z M 35 65 L 25 75 L 32 85 Z M 65 65 L 75 75 L 68 85 Z' } },
-            pants: { jeans: { p: 'M 37 92 L 63 92 L 63 125 L 52 125 L 52 108 L 48 108 L 48 125 L 37 125 Z' } },
-            shoes: { snkr: { p: 'M 35 130 L 48 130 L 49 142 L 33 142 Z M 52 130 L 65 130 L 67 142 L 51 142 Z' } }
+            hair: {
+                bob: { p: 'M 25 40 Q 25 10 50 10 Q 75 10 75 40 L 75 60 L 65 60 L 65 25 Q 50 15 35 25 L 35 60 L 25 60 Z' },
+                pony: { p: 'M 35 25 Q 50 15 65 25 Q 80 15 90 40 Q 80 30 65 35 L 65 15 Q 50 5 35 15 Z' },
+                spiky: { p: 'M 25 30 L 30 10 L 40 20 L 50 5 L 60 20 L 70 10 L 75 30 L 65 25 Q 50 15 35 25 Z' },
+                long: { p: 'M 25 40 Q 25 10 50 10 Q 75 10 75 40 L 80 80 L 65 80 L 65 25 Q 50 15 35 25 L 35 80 L 20 80 Z' },
+                curly: { p: 'M 25 40 A 15 15 0 0 1 50 10 A 15 15 0 0 1 75 40 A 10 10 0 0 1 85 60 A 15 15 0 0 1 70 80 L 65 80 L 65 25 Q 50 15 35 25 L 35 80 L 30 80 A 15 15 0 0 1 15 60 A 10 10 0 0 1 25 40 Z' }
+            },
+            hat: {
+                cap: { p: 'M 25 20 C 25 5 75 5 75 20 L 85 20 L 85 25 L 25 25 Z' },
+                top: { p: 'M 35 25 L 35 0 L 65 0 L 65 25 M 25 25 L 75 25 L 75 30 L 25 30 Z' },
+                crown: { p: 'M 30 25 L 35 5 L 50 15 L 65 5 L 70 25 Z M 30 25 L 70 25 L 70 30 L 30 30 Z' },
+                beanie: { p: 'M 30 25 C 30 0 70 0 70 25 L 70 30 L 30 30 Z' },
+                bow: { p: 'M 50 15 L 35 5 L 35 25 Z M 50 15 L 65 5 L 65 25 Z' }
+            },
+            shirt: {
+                tee: { p: 'M 35 45 L 65 45 L 65 75 L 35 75 Z M 35 45 L 20 55 L 25 62 L 35 52 Z M 65 45 L 80 55 L 75 62 L 65 52 Z' },
+                tank: { p: 'M 40 45 L 60 45 L 65 75 L 35 75 Z M 38 45 L 43 45 L 43 55 L 38 55 Z M 57 45 L 62 45 L 62 55 L 57 55 Z' },
+                sweater: { p: 'M 33 43 L 67 43 L 67 80 L 33 80 Z M 33 43 L 15 65 L 22 72 L 33 55 Z M 67 43 L 85 65 L 78 72 L 67 55 Z' },
+                crop: { p: 'M 35 45 L 65 45 L 65 65 L 35 65 Z M 35 45 L 20 55 L 25 62 L 35 52 Z M 65 45 L 80 55 L 75 62 L 65 52 Z' },
+                vneck: { p: 'M 35 45 L 42 45 L 50 55 L 58 45 L 65 45 L 65 75 L 35 75 Z M 35 45 L 25 52 L 28 58 L 35 52 Z M 65 45 L 75 52 L 72 58 L 65 52 Z' }
+            },
+            jacket: {
+                open: { p: 'M 33 45 L 42 45 L 42 85 L 30 85 Z M 67 45 L 58 45 L 58 85 L 70 85 Z M 33 45 L 18 60 L 25 65 L 33 50 Z M 67 45 L 82 60 L 75 65 L 67 50 Z' },
+                vest: { p: 'M 35 45 L 43 45 L 43 75 L 32 75 Z M 65 45 L 57 45 L 57 75 L 68 75 Z' },
+                coat: { p: 'M 30 45 L 45 45 L 45 105 L 25 105 Z M 70 45 L 55 45 L 55 105 L 75 105 Z M 30 45 L 15 70 L 22 75 L 30 55 Z M 70 45 L 85 70 L 78 75 L 70 55 Z' },
+                cape: { p: 'M 35 45 L 65 45 L 85 100 L 15 100 Z' },
+                blazer: { p: 'M 33 45 L 45 45 L 40 65 L 30 80 Z M 67 45 L 55 45 L 60 65 L 70 80 Z M 33 45 L 18 60 L 25 65 L 33 50 Z M 67 45 L 82 60 L 75 65 L 67 50 Z' }
+            },
+            pants: {
+                jeans: { p: 'M 35 88 L 65 88 L 65 125 L 53 125 L 53 95 L 47 95 L 47 125 L 35 125 Z' },
+                shorts: { p: 'M 35 88 L 65 88 L 65 105 L 53 105 L 53 95 L 47 95 L 47 105 L 35 105 Z' },
+                skirt: { p: 'M 35 88 L 65 88 L 75 110 L 25 110 Z' },
+                joggers: { p: 'M 33 88 L 67 88 L 65 125 L 53 125 L 53 95 L 47 95 L 47 125 L 35 125 Z' },
+                flare: { p: 'M 35 88 L 65 88 L 70 130 L 53 130 L 53 95 L 47 95 L 47 130 L 30 130 Z' }
+            },
+            socks: {
+                ankle: { p: 'M 35 120 L 47 120 L 47 130 L 35 130 Z M 53 120 L 65 120 L 65 130 L 53 130 Z' },
+                high: { p: 'M 35 105 L 47 105 L 47 130 L 35 130 Z M 53 105 L 65 105 L 65 130 L 53 130 Z' },
+                striped: { p: 'M 35 110 L 47 110 L 47 115 L 35 115 Z M 35 120 L 47 120 L 47 125 L 35 125 Z M 53 110 L 65 110 L 65 115 L 53 115 Z M 53 120 L 65 120 L 65 125 L 53 125 Z' },
+                frilly: { p: 'M 33 115 Q 41 120 49 115 L 47 130 L 35 130 Z M 51 115 Q 59 120 67 115 L 65 130 L 53 130 Z' },
+                basic: { p: 'M 35 115 L 47 115 L 47 130 L 35 130 Z M 53 115 L 65 115 L 65 130 L 53 130 Z' }
+            },
+            shoes: {
+                snkr: { p: 'M 33 125 L 49 125 L 49 135 L 31 135 Z M 51 125 L 67 125 L 69 135 L 51 135 Z' },
+                boots: { p: 'M 33 115 L 49 115 L 49 135 L 31 135 Z M 51 115 L 67 115 L 69 135 L 51 135 Z' },
+                heels: { p: 'M 35 130 L 47 130 L 47 135 L 45 135 L 45 133 L 35 135 Z M 53 130 L 65 130 L 65 135 L 63 135 L 63 133 L 55 135 Z' },
+                flats: { p: 'M 35 130 L 47 130 L 47 135 L 33 135 Z M 53 130 L 65 130 L 67 135 L 53 135 Z' },
+                sandals: { p: 'M 35 132 L 47 132 L 47 135 L 35 135 Z M 53 132 L 65 132 L 65 135 L 53 135 Z' }
+            },
+            accLeft: {
+                wand: { p: 'M 25 80 L 15 50 M 15 50 L 18 45 L 12 45 Z' },
+                star: { p: 'M 25 80 L 25 60 L 30 55 L 20 55 Z' },
+                balloon: { p: 'M 25 80 L 15 40 M 15 40 C 0 20 30 20 15 40' },
+                shield: { p: 'M 25 80 L 25 60 L 10 60 L 10 80 Q 17.5 90 25 80' },
+                bag: { p: 'M 25 80 L 10 80 L 10 100 L 30 100 L 30 80 Z M 15 80 C 15 65 25 65 25 80' }
+            },
+            accRight: {
+                sword: { p: 'M 75 80 L 85 50 M 78 72 L 88 72' },
+                flower: { p: 'M 75 80 L 75 60 M 75 60 A 5 5 0 1 1 75 50 A 5 5 0 1 1 75 60' },
+                phone: { p: 'M 70 75 L 85 75 L 85 95 L 70 95 Z' },
+                book: { p: 'M 70 75 L 90 75 L 90 95 L 70 95 Z M 80 75 L 80 95' },
+                cup: { p: 'M 72 75 L 82 75 L 80 90 L 74 90 Z M 82 80 C 88 80 88 85 82 85' }
+            }
         };
 
         const App = () => {
@@ -119,8 +178,8 @@
             const [lvl, setLvl] = useState(1);
             const [xp, setXp] = useState(0);
             const [focusNum, setFocusNum] = useState(1);
-            const [bank, setBank] = useState(new Set(['hair_bob_#4b2c20', 'shirt_tee_#ec4899', 'pants_jeans_#3b82f6', 'shoes_snkr_#ffffff']));
-            const [outfit, setOutfit] = useState({ hair: { s: 'bob', c: '#4b2c20' }, shirt: { s: 'tee', c: '#ec4899' }, pants: { s: 'jeans', c: '#3b82f6' }, shoes: { s: 'snkr', c: '#ffffff' } });
+            const [bank, setBank] = useState(new Set());
+            const [outfit, setOutfit] = useState({});
 
             const addXp = (amt) => {
                 setXp(v => {
@@ -165,7 +224,7 @@
                             {view === 'garden' && <GardenGame focusNum={focusNum} addXp={addXp} />}
                             {view === 'facts' && <FactsGame focusNum={focusNum} addXp={addXp} />}
                             {view === 'spelling' && <SpellingBee addXp={addXp} />}
-                            {view === 'mirror' && <MirrorView outfit={outfit} bank={bank} setOutfit={setOutfit} setView={setView} />}
+                            {view === 'mirror' && <MirrorView outfit={outfit} bank={bank} setBank={setBank} setOutfit={setOutfit} setView={setView} addXp={addXp} />}
                         </div>
 
                         <div className="h-3 w-full bg-slate-100"><div className="h-full bg-pink-500 transition-all duration-700" style={{ width: `${xp}%` }} /></div>
@@ -460,21 +519,177 @@
             );
         };
 
-        const MirrorView = ({ outfit, bank, setOutfit, setView }) => (
-            <div className="h-full flex flex-col">
-                <div className="h-64 bg-sky-50 rounded-[3rem] mb-4 flex items-center justify-center p-4">
-                    <svg viewBox="0 0 100 150" className="h-full drop-shadow-lg overflow-visible">
-                        <rect x="38" y="65" width="24" height="55" rx="10" fill="#ffdbac" stroke="#333" />
-                        <circle cx="50" cy="48" r="18" fill="#ffdbac" stroke="#333" />
-                        <path d={ASSETS.shoes.snkr.p} fill={outfit.shoes.c} stroke="#333" />
-                        <path d={ASSETS.pants.jeans.p} fill={outfit.pants.c} stroke="#333" />
-                        <path d={ASSETS.shirt.tee.p} fill={outfit.shirt.c} stroke="#333" />
-                        <path d={ASSETS.hair.bob.p} fill={outfit.hair.c} stroke="#333" />
-                    </svg>
+        const MirrorView = ({ outfit, bank, setBank, setOutfit, setView, addXp }) => {
+            const [tab, setTab] = useState('shop');
+            const [category, setCategory] = useState('hair');
+            const [mathState, setMathState] = useState(null);
+            const [mathInput, setMathInput] = useState('');
+
+            const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#ec4899', '#a855f7', '#4b2c20', '#ffffff'];
+            const CATEGORIES = ['hair', 'hat', 'shirt', 'jacket', 'pants', 'socks', 'shoes', 'accLeft', 'accRight'];
+            const ORDERED_LAYERS = ['socks', 'shoes', 'pants', 'shirt', 'jacket', 'hair', 'hat', 'accLeft', 'accRight'];
+            
+            const CAT_VIEWBOX = {
+                hair: '15 0 70 90',
+                hat: '15 0 70 50',
+                shirt: '10 35 80 55',
+                jacket: '10 35 80 75',
+                pants: '20 80 60 55',
+                socks: '25 100 50 35',
+                shoes: '25 110 50 35',
+                accLeft: '0 40 40 65',
+                accRight: '60 40 40 65'
+            };
+
+            const handleEquip = (cat, style, color) => {
+                setOutfit(prev => {
+                    const next = { ...prev };
+                    if (next[cat] && next[cat].s === style && next[cat].c === color) {
+                        delete next[cat];
+                    } else {
+                        next[cat] = { s: style, c: color };
+                    }
+                    return next;
+                });
+            };
+
+            const startMath = (style, color) => {
+                const a = Math.floor(Math.random() * 8) + 1;
+                const b = Math.floor(Math.random() * 8) + 1;
+                const sum = a + b;
+                const problems = [
+                    { q: `${a} + ${b} = ?`, ans: sum },
+                    { q: `${b} + ${a} = ?`, ans: sum },
+                    { q: `${sum} - ${a} = ?`, ans: b },
+                    { q: `${sum} - ${b} = ?`, ans: a }
+                ].sort(() => Math.random() - 0.5);
+
+                setMathState({ item: { cat: category, style, color }, qIdx: 0, problems });
+                setMathInput('');
+            };
+
+            const handleMathCheck = (val) => {
+                setMathInput(val);
+                if (parseInt(val) === mathState.problems[mathState.qIdx].ans) {
+                    if (mathState.qIdx === 3) {
+                        const key = `${mathState.item.cat}_${mathState.item.style}_${mathState.item.color}`;
+                        setBank(prev => new Set(prev).add(key));
+                        addXp(50);
+                        setMathState(null);
+                        setTab('closet');
+                    } else {
+                        setTimeout(() => {
+                            setMathState(prev => ({ ...prev, qIdx: prev.qIdx + 1 }));
+                            setMathInput('');
+                        }, 400);
+                    }
+                }
+            };
+
+            return (
+                <div className="h-full flex flex-col">
+                    <div className="flex justify-between items-center mb-2 px-2">
+                        <div className="flex gap-2">
+                            <button onClick={() => setTab('shop')} className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${tab === 'shop' ? 'bg-pink-500 text-white shadow-md' : 'bg-slate-200 text-slate-500'}`}>Shop</button>
+                            <button onClick={() => setTab('closet')} className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${tab === 'closet' ? 'bg-pink-500 text-white shadow-md' : 'bg-slate-200 text-slate-500'}`}>Closet</button>
+                        </div>
+                        <button onClick={() => setView('menu')} className="text-[10px] uppercase font-black text-slate-400">Exit</button>
+                    </div>
+
+                    <div className="h-48 bg-sky-50 rounded-[2.5rem] mb-4 flex items-center justify-center p-2 relative overflow-hidden border-4 border-white shadow-inner">
+                        {mathState && (
+                            <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center p-4">
+                                <div className="text-[10px] font-black uppercase text-pink-500 tracking-widest mb-3">Unlocking {mathState.item.style}</div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full mb-4">
+                                    <div className="bg-green-400 h-full rounded-full transition-all" style={{width: `${(mathState.qIdx / 4) * 100}%`}}></div>
+                                </div>
+                                <div className="text-4xl font-black text-slate-800 mb-6">{mathState.problems[mathState.qIdx].q}</div>
+                                <input type="number" value={mathInput} onChange={e => handleMathCheck(e.target.value)} className="w-24 text-center text-3xl font-black p-3 bg-slate-50 border-4 border-pink-100 rounded-xl outline-none focus:border-pink-300" autoFocus />
+                            </div>
+                        )}
+
+                        <svg viewBox="0 0 100 150" className="h-full drop-shadow-lg overflow-visible z-10">
+                            {/* Doll Base */}
+                            <rect x="35" y="45" width="30" height="45" rx="10" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+                            <circle cx="50" cy="30" r="15" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+                            <rect x="35" y="90" width="12" height="40" rx="5" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+                            <rect x="53" y="90" width="12" height="40" rx="5" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+                            <rect x="20" y="45" width="10" height="35" rx="5" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+                            <rect x="70" y="45" width="10" height="35" rx="5" fill="#ffdbac" stroke="#333" strokeWidth="1.5" />
+
+                            {/* Layers */}
+                            {ORDERED_LAYERS.map(cat => {
+                                if (!outfit[cat]) return null;
+                                return <path key={cat} d={ASSETS[cat][outfit[cat].s].p} fill={outfit[cat].c} stroke="#333" strokeWidth="1.5" strokeLinejoin="round" />;
+                            })}
+                            
+                            {/* Face (Rendered last to stay on top of layers) */}
+                            <circle cx="45" cy="28" r="1.5" fill="#333" />
+                            <circle cx="55" cy="28" r="1.5" fill="#333" />
+                            <path d="M 46 34 Q 50 38 54 34" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                    </div>
+
+                    <div className="flex gap-2 overflow-x-auto pb-2 mb-2 no-scrollbar">
+                        {CATEGORIES.map(cat => (
+                            <button key={cat} onClick={() => setCategory(cat)} className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase whitespace-nowrap transition-all ${category === cat ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 no-scrollbar">
+                        {tab === 'shop' && (
+                            <div className="space-y-4">
+                                {Object.keys(ASSETS[category]).map(style => (
+                                    <div key={style} className="bg-slate-50 p-3 rounded-2xl border-2 border-white shadow-sm">
+                                        <div className="text-xs font-black uppercase text-slate-500 mb-2">{style}</div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {COLORS.map(c => {
+                                                const key = `${category}_${style}_${c}`;
+                                                const isOwned = bank.has(key);
+                                                return (
+                                                    <button 
+                                                        key={c}
+                                                        onClick={() => !isOwned && startMath(style, c)}
+                                                        className={`w-6 h-6 rounded-full border-2 transition-all ${isOwned ? 'opacity-20 cursor-not-allowed border-slate-300' : 'border-white hover:scale-110 shadow-sm'}`}
+                                                        style={{ backgroundColor: c }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {tab === 'closet' && (
+                            <div className="grid grid-cols-3 gap-2">
+                                {Array.from(bank).filter(key => key.startsWith(category + '_')).length === 0 ? (
+                                    <div className="col-span-3 py-8 text-center text-slate-400 text-xs font-black uppercase">No items found. Go to Shop!</div>
+                                ) : (
+                                    Array.from(bank).filter(key => key.startsWith(category + '_')).map(key => {
+                                        const [, style, color] = key.split('_');
+                                        const isEquipped = outfit[category] && outfit[category].s === style && outfit[category].c === color;
+                                        return (
+                                            <button 
+                                                key={key}
+                                                onClick={() => handleEquip(category, style, color)}
+                                                className={`aspect-square rounded-2xl flex items-center justify-center border-4 transition-all overflow-hidden p-2 ${isEquipped ? 'border-pink-500 bg-pink-50' : 'border-white bg-slate-50 shadow-sm'}`}
+                                            >
+                                                <svg viewBox={CAT_VIEWBOX[category]} className="w-full h-full">
+                                                    <path d={ASSETS[category][style].p} fill={color} stroke="#333" strokeWidth="1.5" strokeLinejoin="round" />
+                                                </svg>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <button onClick={() => setView('menu')} className="w-full p-6 bg-rose-400 text-white rounded-3xl font-black shadow-lg">Back to Adventure</button>
-            </div>
-        );
+            );
+        };
 
         const MenuBtn = ({ color, icon, title, onClick }) => (
             <button onClick={onClick} className={`${color} w-full p-8 rounded-[2.5rem] text-white flex items-center gap-6 shadow-xl active:scale-95 transition-all`}>
